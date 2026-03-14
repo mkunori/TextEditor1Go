@@ -4,6 +4,7 @@ import java.io.*;
 
 public class TE1Main extends JFrame {
     private JTextArea textArea;
+    private File currentFile; // 現在開いているファイル
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -30,28 +31,36 @@ public class TE1Main extends JFrame {
         JMenu fileMenu = new JMenu("File");
 
         // メニュー項目を用意する
-        JMenuItem openItem = new JMenuItem("Open"); // ファイルを開く
-        JMenuItem saveItem = new JMenuItem("Save"); // ファイルを保存する
         JMenuItem newItem = new JMenuItem("New"); // 新規に始める
+        JMenuItem openItem = new JMenuItem("Open"); // ファイルを開く
+        JMenuItem saveItem = new JMenuItem("Save"); // ファイルを上書き保存する
+        JMenuItem saveAsItem = new JMenuItem("Save As"); // ファイルに名前をつけて保存する
 
+        newItem.addActionListener(e -> newFile());
         openItem.addActionListener(e -> openFile());
         saveItem.addActionListener(e -> saveFile());
-        newItem.addActionListener(e -> newFile());
+        saveAsItem.addActionListener(e -> saveAsFile());
 
+        fileMenu.add(newItem);
         fileMenu.add(openItem);
         fileMenu.add(saveItem);
-        fileMenu.add(newItem);
-        menuBar.add(fileMenu);
+        fileMenu.add(saveAsItem);
 
+        menuBar.add(fileMenu);
         setJMenuBar(menuBar);
+    }
+
+    // 新規に始める
+    public void newFile() {
+        textArea.setText("");
     }
 
     // ファイルを開く
     public void openFile() {
         JFileChooser chooser = new JFileChooser();
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            try (BufferedReader br =
-                    new BufferedReader(new FileReader(chooser.getSelectedFile()))) {
+            currentFile = chooser.getSelectedFile();
+            try (BufferedReader br = new BufferedReader(new FileReader(currentFile))) {
                 textArea.read(br, null);
             } catch (IOException e) {
                 e.printStackTrace();
@@ -59,21 +68,29 @@ public class TE1Main extends JFrame {
         }
     }
 
-    // ファイルを保存する
+    // ファイルを上書き保存する
     public void saveFile() {
-        JFileChooser chooser = new JFileChooser();
-        if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            try (BufferedWriter bw =
-                    new BufferedWriter(new FileWriter(chooser.getSelectedFile()))) {
-                textArea.write(bw);
-            } catch (IOException e) {
-                e.printStackTrace();
-            }
+        // 現在開いているファイルが未指定のときは新規に保存する
+        if (currentFile == null) {
+            saveAsFile();
+            return;
+        }
+        // 現在開いているファイルにテキスト内容を書き込む
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(currentFile))) {
+            textArea.write(bw);
+        } catch (IOException e) {
+            e.printStackTrace();
         }
     }
 
-    // 新規に始める
-    public void newFile() {
-        textArea.setText("");
+    // ファイルに名前をつけて保存する
+    public void saveAsFile() {
+        JFileChooser chooser = new JFileChooser();
+        if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
+            currentFile = chooser.getSelectedFile();
+            saveFile();
+            setTitle(currentFile.getName());
+        }
     }
+
 }
