@@ -30,14 +30,17 @@ public class TE1Main extends JFrame {
         JMenu fileMenu = new JMenu("File");
 
         // メニュー項目を用意する
-        JMenuItem open = new JMenuItem("Open"); // ファイルを開く
-        JMenuItem save = new JMenuItem("Save"); // ファイルを保存する
+        JMenuItem openItem = new JMenuItem("Open"); // ファイルを開く
+        JMenuItem saveItem = new JMenuItem("Save"); // ファイルを保存する
+        JMenuItem newItem = new JMenuItem("New"); // 新規に始める
 
-        open.addActionListener(e -> openFile());
-        save.addActionListener(e -> saveFile());
+        openItem.addActionListener(e -> openFile());
+        saveItem.addActionListener(e -> saveFile());
+        newItem.addActionListener(e -> newFile());
 
-        fileMenu.add(open);
-        fileMenu.add(save);
+        fileMenu.add(openItem);
+        fileMenu.add(saveItem);
+        fileMenu.add(newItem);
         menuBar.add(fileMenu);
 
         setJMenuBar(menuBar);
@@ -67,5 +70,10 @@ public class TE1Main extends JFrame {
                 e.printStackTrace();
             }
         }
+    }
+
+    // 新規に始める
+    public void newFile() {
+        textArea.setText("");
     }
 }
