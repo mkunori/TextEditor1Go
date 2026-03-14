@@ -1,10 +1,12 @@
 import javax.swing.*;
+import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.io.*;
 
 public class TE1Main extends JFrame {
     private JTextArea textArea;
     private File currentFile; // 現在開いているファイル
+    private UndoManager undoManager; // Undo/Redo
 
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
@@ -21,38 +23,52 @@ public class TE1Main extends JFrame {
         textArea = new JTextArea();
         add(new JScrollPane(textArea), BorderLayout.CENTER);
 
+        // Undo/Redo機能を準備する
+        undoManager = new UndoManager();
+        textArea.getDocument().addUndoableEditListener(undoManager);
+
         // メニューを生成する
         createMenu();
+
     }
 
     // メニューを生成する
     private void createMenu() {
         JMenuBar menuBar = new JMenuBar();
-        JMenu fileMenu = new JMenu("File");
 
-        // メニュー項目を用意する
-        JMenuItem newItem = new JMenuItem("New"); // 新規に始める
-        JMenuItem openItem = new JMenuItem("Open"); // ファイルを開く
-        JMenuItem saveItem = new JMenuItem("Save"); // ファイルを上書き保存する
-        JMenuItem saveAsItem = new JMenuItem("Save As"); // ファイルに名前をつけて保存する
-
+        // ファイル項目を用意する
+        JMenu fileMenu = new JMenu("ファイル");
+        JMenuItem newItem = new JMenuItem("新規作成");
+        JMenuItem openItem = new JMenuItem("開く");
+        JMenuItem saveItem = new JMenuItem("保存");
+        JMenuItem saveAsItem = new JMenuItem("名前を付けて保存");
         newItem.addActionListener(e -> newFile());
         openItem.addActionListener(e -> openFile());
         saveItem.addActionListener(e -> saveFile());
         saveAsItem.addActionListener(e -> saveAsFile());
-
         fileMenu.add(newItem);
         fileMenu.add(openItem);
         fileMenu.add(saveItem);
         fileMenu.add(saveAsItem);
-
         menuBar.add(fileMenu);
+
+        // 編集項目を用意する
+        JMenu editMenu = new JMenu("編集");
+        JMenuItem undoItem = new JMenuItem("元に戻す");
+        JMenuItem redoItem = new JMenuItem("やり直す");
+        undoItem.addActionListener(e -> undo());
+        redoItem.addActionListener(e -> redo());
+        editMenu.add(undoItem);
+        editMenu.add(redoItem);
+        menuBar.add(editMenu);
+
         setJMenuBar(menuBar);
     }
 
     // 新規に始める
     public void newFile() {
         textArea.setText("");
+        undoManager.discardAllEdits(); // 新規時は履歴を削除する
     }
 
     // ファイルを開く
@@ -62,6 +78,10 @@ public class TE1Main extends JFrame {
             currentFile = chooser.getSelectedFile();
             try (BufferedReader br = new BufferedReader(new FileReader(currentFile))) {
                 textArea.read(br, null);
+                // 新たに開いた直後はUndo/Redoが無いはずなので過去の履歴を削除する
+                undoManager.discardAllEdits();
+                // 新たに開いたファイルにはリスナー登録が無いので再登録する
+                textArea.getDocument().addUndoableEditListener(undoManager);
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -93,4 +113,17 @@ public class TE1Main extends JFrame {
         }
     }
 
+    // Undoを実行する
+    public void undo() {
+        if (undoManager.canUndo()) {
+            undoManager.undo();
+        }
+    }
+
+    // Redoを実行する
+    public void redo() {
+        if (undoManager.canRedo()) {
+            undoManager.redo();
+        }
+    }
 }
