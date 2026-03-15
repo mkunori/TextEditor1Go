@@ -1,4 +1,4 @@
-import javax.swing.*;
+﻿import javax.swing.*;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.io.*;
@@ -29,7 +29,6 @@ public class TE1Main extends JFrame {
 
         // メニューを生成する
         createMenu();
-
     }
 
     // メニューを生成する
@@ -58,6 +57,8 @@ public class TE1Main extends JFrame {
         JMenuItem redoItem = new JMenuItem("やり直す");
         undoItem.addActionListener(e -> undo());
         redoItem.addActionListener(e -> redo());
+        undoItem.setAccelerator(KeyStroke.getKeyStroke("control Z"));
+        redoItem.setAccelerator(KeyStroke.getKeyStroke("control Y"));
         editMenu.add(undoItem);
         editMenu.add(redoItem);
         menuBar.add(editMenu);
