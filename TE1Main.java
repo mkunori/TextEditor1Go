@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
+import javax.swing.event.DocumentListener;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
 import java.io.*;
@@ -14,9 +16,18 @@ import java.io.*;
  * - Undo / Redo
  */
 public class TE1Main extends JFrame {
+
+    /** テキストエリア */
     private JTextArea textArea;
-    private File currentFile; // 現在開いているファイル
-    private UndoManager undoManager; // Undo / Redo
+
+    /** 行番号エリア */
+    private JTextArea lineNumberArea;
+
+    /** 現在開いているファイル */
+    private File currentFile;
+
+    /** Undo / Redo 機能用オブジェクト */
+    private UndoManager undoManager;
 
     /**
      * アプリケーションを起動する。
@@ -32,19 +43,36 @@ public class TE1Main extends JFrame {
     /**
      * メインウィンドウを初期化する。
      *
-     * テキストエリア、Undo/Redo機能、メニューバーを生成する。
+     * テキストエリア、行番号エリア、Undo / Redo機能、
+     * メニューバーを生成する。
      */
     public TE1Main() {
         setTitle("テキストエディタ-1号");
         setSize(600, 400);
         setDefaultCloseOperation(EXIT_ON_CLOSE);
 
+        // 本文用エリア
         textArea = new JTextArea();
-        add(new JScrollPane(textArea), BorderLayout.CENTER);
 
-        // Undo/Redo機能を準備する。
+        // 行番号用エリア
+        lineNumberArea = new JTextArea("1");
+        lineNumberArea.setEditable(false);
+        lineNumberArea.setBackground(Color.LIGHT_GRAY);
+        lineNumberArea.setFont(textArea.getFont());
+
+        // スクロール付きテキストエリアを作成し、左側に行番号を表示する。
+        JScrollPane scrollPane = new JScrollPane(textArea);
+        scrollPane.setRowHeaderView(lineNumberArea);
+        add(scrollPane, BorderLayout.CENTER);
+
+        // Undo / Redo機能を準備する。
         undoManager = new UndoManager();
-        textArea.getDocument().addUndoableEditListener(undoManager);
+
+        // リスナーを登録する。
+        registerDocumentListeners();
+
+        // 初期状態の行番号を表示する。
+        updateLineNumbers();
 
         // メニューを生成する。
         createMenu();
@@ -65,29 +93,63 @@ public class TE1Main extends JFrame {
         JMenuItem openItem = new JMenuItem("開く");
         JMenuItem saveItem = new JMenuItem("保存");
         JMenuItem saveAsItem = new JMenuItem("名前を付けて保存");
+
         newItem.addActionListener(e -> newFile());
         openItem.addActionListener(e -> openFile());
         saveItem.addActionListener(e -> saveFile());
         saveAsItem.addActionListener(e -> saveAsFile());
+
         fileMenu.add(newItem);
         fileMenu.add(openItem);
         fileMenu.add(saveItem);
         fileMenu.add(saveAsItem);
         menuBar.add(fileMenu);
 
-        // 編集項目を用意する
+        // 編集項目を用意する。
         JMenu editMenu = new JMenu("編集");
         JMenuItem undoItem = new JMenuItem("元に戻す");
         JMenuItem redoItem = new JMenuItem("やり直す");
+
         undoItem.addActionListener(e -> undo());
         redoItem.addActionListener(e -> redo());
         undoItem.setAccelerator(KeyStroke.getKeyStroke("control Z"));
         redoItem.setAccelerator(KeyStroke.getKeyStroke("control Y"));
+
         editMenu.add(undoItem);
         editMenu.add(redoItem);
         menuBar.add(editMenu);
 
         setJMenuBar(menuBar);
+    }
+
+    /**
+     * Document にリスナーを登録する。
+     */
+    private void registerDocumentListeners() {
+        registerLineNumberListener();
+        textArea.getDocument().addUndoableEditListener(undoManager);
+    }
+
+    /**
+    * 行番号更新用のリスナーを登録する。
+    */
+    private void registerLineNumberListener() {
+        textArea.getDocument().addDocumentListener(new DocumentListener() {
+            @Override
+            public void insertUpdate(DocumentEvent e) {
+                updateLineNumbers();
+            }
+
+            @Override
+            public void removeUpdate(DocumentEvent e) {
+                updateLineNumbers();
+            }
+
+            @Override
+            public void changedUpdate(DocumentEvent e) {
+                updateLineNumbers();
+            }
+        });
     }
 
     /**
@@ -99,7 +161,8 @@ public class TE1Main extends JFrame {
     public void newFile() {
         textArea.setText("");
         currentFile = null;
-        undoManager.discardAllEdits(); // 新規時は履歴を削除する。
+        undoManager.discardAllEdits();
+        updateLineNumbers();
         setTitle("テキストエディタ-1号");
     }
 
@@ -113,12 +176,17 @@ public class TE1Main extends JFrame {
         JFileChooser chooser = new JFileChooser();
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
             currentFile = chooser.getSelectedFile();
+
             try (BufferedReader br = new BufferedReader(new FileReader(currentFile))) {
                 textArea.read(br, null);
-                // 新たに開いた直後はUndo/Redoが無いはずなので過去の履歴を削除する。
+
+                // 新たに開いた直後はUndo / Redoが無いはずなので過去の履歴を削除する。
                 undoManager.discardAllEdits();
-                // 新たに開いたファイルにはリスナー登録が無いので再登録する。
-                textArea.getDocument().addUndoableEditListener(undoManager);
+
+                // 新しい Document にはリスナー登録が無いので再登録する。
+                registerDocumentListeners();
+
+                updateLineNumbers();
             } catch (IOException e) {
                 e.printStackTrace();
             }
@@ -137,6 +205,7 @@ public class TE1Main extends JFrame {
             saveAsFile();
             return;
         }
+
         // 現在開いているファイルにテキスト内容を書き込む。
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(currentFile))) {
             textArea.write(bw);
@@ -153,6 +222,7 @@ public class TE1Main extends JFrame {
      */
     public void saveAsFile() {
         JFileChooser chooser = new JFileChooser();
+
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             currentFile = chooser.getSelectedFile();
             saveFile();
@@ -176,5 +246,19 @@ public class TE1Main extends JFrame {
         if (undoManager.canRedo()) {
             undoManager.redo();
         }
+    }
+
+    /**
+     * 本文の行数に応じて行番号を更新する。
+     */
+    private void updateLineNumbers() {
+        int lineCount = textArea.getLineCount();
+        StringBuilder sb = new StringBuilder();
+
+        for (int i = 1; i <= lineCount; i++) {
+            sb.append(i).append(System.lineSeparator());
+        }
+
+        lineNumberArea.setText(sb.toString());
     }
 }
