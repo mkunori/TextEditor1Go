@@ -3,6 +3,8 @@ import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.undo.UndoManager;
 import java.awt.*;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
 import java.io.*;
 
 /**
@@ -52,7 +54,15 @@ public class TE1Main extends JFrame {
     public TE1Main() {
         setTitle("テキストエディタ-1号");
         setSize(600, 400);
-        setDefaultCloseOperation(EXIT_ON_CLOSE);
+        setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
+
+        // 未保存でウィンドウを閉じたときは警告を表示する。
+        addWindowListener(new WindowAdapter() {
+            @Override
+            public void windowClosing(WindowEvent e) {
+                confirmClose();
+            }
+        });
 
         // 本文用エリア
         textArea = new JTextArea();
@@ -138,8 +148,8 @@ public class TE1Main extends JFrame {
     }
 
     /**
-    * 行番号更新用のリスナーを登録する。
-    */
+     * 行番号更新用のリスナーを登録する。
+     */
     private void registerLineNumberListener() {
         textArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override
@@ -304,5 +314,33 @@ public class TE1Main extends JFrame {
     private void setModified(boolean modified) {
         this.modified = modified;
         updateTitle();
+    }
+
+    /**
+     * ウィンドウを閉じる前に未保存変更を確認する。
+     */
+    private void confirmClose() {
+        if (!modified) {
+            dispose();
+            return;
+        }
+
+        int result = JOptionPane.showConfirmDialog(
+                this,
+                "変更内容を保存しますか？",
+                "確認",
+                JOptionPane.YES_NO_CANCEL_OPTION,
+                JOptionPane.WARNING_MESSAGE);
+
+        if (result == JOptionPane.YES_NO_OPTION) {
+            saveFile();
+
+            // 保存後に未保存状態でなければ閉じる
+            if (!modified) {
+                dispose();
+            }
+        } else if (result == JOptionPane.NO_OPTION) {
+            disable();
+        }
     }
 }
