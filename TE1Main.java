@@ -387,6 +387,8 @@ public class TE1Main extends JFrame {
 
     /**
      * 前回検索した文字列の次の一致位置を検索する。
+     * 
+     * テキスト末尾まで検索した場合はテキスト戦闘からの検索に戻る。
      */
     public void findNextText() {
         if (lastSearchText == null || lastSearchText.isEmpty()) {
@@ -397,17 +399,20 @@ public class TE1Main extends JFrame {
         String text = textArea.getText();
         int index = text.indexOf(lastSearchText, lastSearchIndex);
 
-        if (index >= 0) {
-            textArea.requestFocus();
-            textArea.select(index, index + lastSearchText.length());
-
-            // 次は1文字後ろから検索する。
-            // 例えば abababa というテキストに対して aba を検索したときに、
-            // [aba]baba -> ab[aba]ba -> abab[aba] のようにヒットさせるため。
-            lastSearchIndex = index + 1;
-        } else {
-            JOptionPane.showMessageDialog(this, "末尾まで検索しました。");
-            lastSearchIndex = 0;
+        if (index < 0) {
+            index = text.indexOf(lastSearchText);
         }
+
+        if (index < 0) {
+            JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
+        }
+
+        textArea.requestFocus();
+        textArea.select(index, index + lastSearchText.length());
+
+        // 次は1文字後ろから検索する。
+        // 例えば abababa というテキストに対して aba を検索したときに、
+        // [aba]baba -> ab[aba]ba -> abab[aba] のようにヒットさせるため。
+        lastSearchIndex = index + 1;
     }
 }
