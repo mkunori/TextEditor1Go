@@ -126,14 +126,19 @@ public class TE1Main extends JFrame {
         JMenu editMenu = new JMenu("編集");
         JMenuItem undoItem = new JMenuItem("元に戻す");
         JMenuItem redoItem = new JMenuItem("やり直す");
+        JMenuItem findItem = new JMenuItem("検索");
 
         undoItem.addActionListener(e -> undo());
         redoItem.addActionListener(e -> redo());
+        findItem.addActionListener(e -> findText());
         undoItem.setAccelerator(KeyStroke.getKeyStroke("control Z"));
         redoItem.setAccelerator(KeyStroke.getKeyStroke("control Y"));
+        findItem.setAccelerator(KeyStroke.getKeyStroke("control F"));
 
         editMenu.add(undoItem);
         editMenu.add(redoItem);
+        editMenu.addSeparator();
+        editMenu.add(findItem);
         menuBar.add(editMenu);
 
         setJMenuBar(menuBar);
@@ -341,6 +346,27 @@ public class TE1Main extends JFrame {
             }
         } else if (result == JOptionPane.NO_OPTION) {
             dispose();
+        }
+    }
+
+    /**
+     * 検索文字列を入力して本文から検索する。
+     */
+    public void findText() {
+        String keyword = JOptionPane.showInputDialog(this, "検索する文字列を入力してください。");
+
+        if (keyword == null || keyword.isEmpty()) {
+            return;
+        }
+
+        String text = textArea.getText();
+        int index = text.indexOf(keyword);
+
+        if (index >= 0) {
+            textArea.requestFocus();
+            textArea.select(index, index + keyword.length());
+        } else {
+            JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
         }
     }
 }
