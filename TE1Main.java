@@ -34,6 +34,12 @@ public class TE1Main extends JFrame {
     /** 未保存変更があるか */
     private boolean modified = false;
 
+    /** 前回検索した文字列 */
+    private String lastSearchText;
+
+    /** 次回検索を開始する位置 */
+    private int lastSearchIndex;
+
     /**
      * アプリケーションを起動する。
      *
@@ -127,18 +133,22 @@ public class TE1Main extends JFrame {
         JMenuItem undoItem = new JMenuItem("元に戻す");
         JMenuItem redoItem = new JMenuItem("やり直す");
         JMenuItem findItem = new JMenuItem("検索");
+        JMenuItem findNextItem = new JMenuItem("次を検索");
 
         undoItem.addActionListener(e -> undo());
         redoItem.addActionListener(e -> redo());
         findItem.addActionListener(e -> findText());
+        findNextItem.addActionListener(e -> findNextText());
         undoItem.setAccelerator(KeyStroke.getKeyStroke("control Z"));
         redoItem.setAccelerator(KeyStroke.getKeyStroke("control Y"));
         findItem.setAccelerator(KeyStroke.getKeyStroke("control F"));
+        findNextItem.setAccelerator(KeyStroke.getKeyStroke("F3"));
 
         editMenu.add(undoItem);
         editMenu.add(redoItem);
         editMenu.addSeparator();
         editMenu.add(findItem);
+        editMenu.add(findNextItem);
         menuBar.add(editMenu);
 
         setJMenuBar(menuBar);
@@ -340,7 +350,7 @@ public class TE1Main extends JFrame {
         if (result == JOptionPane.YES_NO_OPTION) {
             saveFile();
 
-            // 保存後に未保存状態でなければ閉じる
+            // 保存後に未保存状態でなければ閉じる。
             if (!modified) {
                 dispose();
             }
@@ -367,6 +377,37 @@ public class TE1Main extends JFrame {
             textArea.select(index, index + keyword.length());
         } else {
             JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
+        }
+
+        lastSearchText = keyword;
+        lastSearchIndex = 0;
+
+        findNextText();
+    }
+
+    /**
+     * 前回検索した文字列の次の一致位置を検索する。
+     */
+    public void findNextText() {
+        if (lastSearchText == null || lastSearchText.isEmpty()) {
+            JOptionPane.showMessageDialog(this, "先に検索を実行してください。");
+            return;
+        }
+
+        String text = textArea.getText();
+        int index = text.indexOf(lastSearchText, lastSearchIndex);
+
+        if (index >= 0) {
+            textArea.requestFocus();
+            textArea.select(index, index + lastSearchText.length());
+
+            // 次は1文字後ろから検索する。
+            // 例えば abababa というテキストに対して aba を検索したときに、
+            // [aba]baba -> ab[aba]ba -> abab[aba] のようにヒットさせるため。
+            lastSearchIndex = index + 1;
+        } else {
+            JOptionPane.showMessageDialog(this, "末尾まで検索しました。");
+            lastSearchIndex = 0;
         }
     }
 }
