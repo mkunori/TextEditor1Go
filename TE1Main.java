@@ -101,6 +101,10 @@ public class TE1Main extends JFrame {
         openItem.addActionListener(e -> openFile());
         saveItem.addActionListener(e -> saveFile());
         saveAsItem.addActionListener(e -> saveAsFile());
+        newItem.setAccelerator(KeyStroke.getKeyStroke("control N"));
+        openItem.setAccelerator(KeyStroke.getKeyStroke("control O"));
+        saveItem.setAccelerator(KeyStroke.getKeyStroke("control S"));
+        saveAsItem.setAccelerator(KeyStroke.getKeyStroke("control shift S"));
 
         fileMenu.add(newItem);
         fileMenu.add(openItem);
