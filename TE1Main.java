@@ -16,6 +16,9 @@ import java.io.*;
  * - ファイルの読み込み
  * - 保存 / 名前を付けて保存
  * - Undo / Redo
+ * - 行番号表示
+ * - 検索 / 次を検索
+ * - 未保存変更の確認
  */
 public class TE1Main extends JFrame {
 
@@ -67,10 +70,10 @@ public class TE1Main extends JFrame {
             }
         });
 
-        // 本文用エリア
+        // 本文用エリア。
         textArea = new JTextArea();
 
-        // 行番号用エリア
+        // 行番号用エリア。
         lineNumberArea = new JTextArea("1");
         lineNumberArea.setEditable(false);
         lineNumberArea.setBackground(Color.LIGHT_GRAY);
@@ -344,7 +347,7 @@ public class TE1Main extends JFrame {
                 JOptionPane.YES_NO_CANCEL_OPTION,
                 JOptionPane.WARNING_MESSAGE);
 
-        if (result == JOptionPane.YES_NO_OPTION) {
+        if (result == JOptionPane.YES_OPTION) {
             saveFile();
 
             // 保存後に未保存状態でなければ閉じる。
@@ -409,7 +412,7 @@ public class TE1Main extends JFrame {
         int startIndex = textArea.getSelectionEnd();
         int index = text.indexOf(lastSearchText, startIndex);
 
-        // 末尾まで見つからなければ先頭から再建策する。
+        // 末尾まで見つからなければ先頭から再検索する。
         if (index < 0) {
             index = text.indexOf(lastSearchText);
         }
