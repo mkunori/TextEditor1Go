@@ -29,6 +29,9 @@ public class TE1Main extends JFrame {
     /** Undo / Redo 機能用オブジェクト */
     private UndoManager undoManager;
 
+    /** 未保存変更があるか */
+    private boolean modified = false;
+
     /**
      * アプリケーションを起動する。
      *
@@ -137,16 +140,19 @@ public class TE1Main extends JFrame {
         textArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
+                setModified(true);
                 updateLineNumbers();
             }
 
             @Override
             public void removeUpdate(DocumentEvent e) {
+                setModified(true);
                 updateLineNumbers();
             }
 
             @Override
             public void changedUpdate(DocumentEvent e) {
+                setModified(true);
                 updateLineNumbers();
             }
         });
@@ -161,6 +167,8 @@ public class TE1Main extends JFrame {
     public void newFile() {
         textArea.setText("");
         currentFile = null;
+        modified = false;
+
         undoManager.discardAllEdits();
         updateLineNumbers();
         setTitle("テキストエディタ-1号");
@@ -179,6 +187,8 @@ public class TE1Main extends JFrame {
 
             try (BufferedReader br = new BufferedReader(new FileReader(currentFile))) {
                 textArea.read(br, null);
+
+                setModified(false);
 
                 // 新たに開いた直後はUndo / Redoが無いはずなので過去の履歴を削除する。
                 undoManager.discardAllEdits();
@@ -212,6 +222,8 @@ public class TE1Main extends JFrame {
         } catch (IOException e) {
             e.printStackTrace();
         }
+
+        setModified(false);
     }
 
     /**
@@ -228,6 +240,8 @@ public class TE1Main extends JFrame {
             saveFile();
             setTitle(currentFile.getName());
         }
+
+        setModified(false);
     }
 
     /**
@@ -260,5 +274,37 @@ public class TE1Main extends JFrame {
         }
 
         lineNumberArea.setText(sb.toString());
+    }
+
+    /**
+     * ウィンドウタイトルを更新する。
+     */
+    private void updateTitle() {
+        String title;
+
+        if (currentFile == null) {
+            title = "テキストエディタ-1号";
+        } else {
+            title = currentFile.getName();
+        }
+
+        if (modified) {
+            title += " *";
+        }
+
+        setTitle(title);
+    }
+
+    /**
+     * 未保存変更状態を設定する。
+     * 
+     * 編集による変更の有無を管理するフラグを設定し、
+     * タイトルバーの表示（* の有無）を更新する。
+     * 
+     * @param modified 未保存変更がある場合は true
+     */
+    private void setModified(boolean modified) {
+        this.modified = modified;
+        updateTitle();
     }
 }
