@@ -37,9 +37,6 @@ public class TE1Main extends JFrame {
     /** 前回検索した文字列 */
     private String lastSearchText;
 
-    /** 次回検索を開始する位置 */
-    private int lastSearchIndex;
-
     /**
      * アプリケーションを起動する。
      *
@@ -361,6 +358,10 @@ public class TE1Main extends JFrame {
 
     /**
      * 検索文字列を入力して本文から検索する。
+     *
+     * 検索は現在のカーソル位置から開始し、
+     * テキスト末尾まで見つからなかった場合は
+     * テキスト先頭から再検索する。
      */
     public void findText() {
         String keyword = JOptionPane.showInputDialog(this, "検索する文字列を入力してください。");
@@ -369,26 +370,32 @@ public class TE1Main extends JFrame {
             return;
         }
 
-        String text = textArea.getText();
-        int index = text.indexOf(keyword);
+        lastSearchText = keyword;
 
-        if (index >= 0) {
-            textArea.requestFocus();
-            textArea.select(index, index + keyword.length());
-        } else {
-            JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
+        String text = textArea.getText();
+        int startIndex = textArea.getCaretPosition();
+        int index = text.indexOf(lastSearchText, startIndex);
+
+        // 末尾まで見つからなかった場合は先頭から再検索する。
+        if (index < 0) {
+            index = text.indexOf(lastSearchText);
         }
 
-        lastSearchText = keyword;
-        lastSearchIndex = 0;
+        if (index < 0) {
+            JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
+            return;
+        }
 
-        findNextText();
+        textArea.requestFocus();
+        textArea.select(index, index + lastSearchText.length());
     }
 
     /**
      * 前回検索した文字列の次の一致位置を検索する。
-     * 
-     * テキスト末尾まで検索した場合はテキスト戦闘からの検索に戻る。
+     *
+     * 検索は現在の選択範囲の直後から開始し、
+     * テキスト末尾まで見つからなかった場合は
+     * テキスト先頭から再検索する。
      */
     public void findNextText() {
         if (lastSearchText == null || lastSearchText.isEmpty()) {
@@ -397,22 +404,22 @@ public class TE1Main extends JFrame {
         }
 
         String text = textArea.getText();
-        int index = text.indexOf(lastSearchText, lastSearchIndex);
 
+        // 現在の選択終了位置から次を検索する。
+        int startIndex = textArea.getSelectionEnd();
+        int index = text.indexOf(lastSearchText, startIndex);
+
+        // 末尾まで見つからなければ先頭から再建策する。
         if (index < 0) {
             index = text.indexOf(lastSearchText);
         }
 
         if (index < 0) {
             JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
+            return;
         }
 
         textArea.requestFocus();
         textArea.select(index, index + lastSearchText.length());
-
-        // 次は1文字後ろから検索する。
-        // 例えば abababa というテキストに対して aba を検索したときに、
-        // [aba]baba -> ab[aba]ba -> abab[aba] のようにヒットさせるため。
-        lastSearchIndex = index + 1;
     }
 }
