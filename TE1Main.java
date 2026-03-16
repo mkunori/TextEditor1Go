@@ -210,31 +210,28 @@ public class TE1Main extends JFrame {
     /**
      * 現在のファイルにテキスト内容を保存する。
      *
-     * 現在のファイルが未指定の場合は、
-     * 名前を付けて保存の処理を行う。
+     * 保存先が未指定、または元ファイルが存在しない場合は、
+     * 「名前を付けて保存」の処理に切り替える。
      */
     public void saveFile() {
-        // 現在開いているファイルが未指定のときは新規に保存する。
-        if (currentFile == null) {
+        if (currentFile == null || !currentFile.exists()) {
             saveAsFile();
             return;
         }
 
-        // 現在開いているファイルにテキスト内容を書き込む。
         try (BufferedWriter bw = new BufferedWriter(new FileWriter(currentFile))) {
             textArea.write(bw);
+            setModified(false);
         } catch (IOException e) {
             e.printStackTrace();
         }
-
-        setModified(false);
     }
 
     /**
-     * ファイル名を指定してテキスト内容を保存する。
+     * 保存先を指定してテキスト内容を保存する。
      *
-     * JFileChooser を表示して保存先を選択し、
-     * 選択されたファイルに内容を書き込む。
+     * JFileChooser を表示してユーザーに保存先を選択させ、
+     * 選択されたファイルに内容を保存する。
      */
     public void saveAsFile() {
         JFileChooser chooser = new JFileChooser();
@@ -242,10 +239,7 @@ public class TE1Main extends JFrame {
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
             currentFile = chooser.getSelectedFile();
             saveFile();
-            setTitle(currentFile.getName());
         }
-
-        setModified(false);
     }
 
     /**
