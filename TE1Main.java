@@ -340,7 +340,7 @@ public class TE1Main extends JFrame {
                 dispose();
             }
         } else if (result == JOptionPane.NO_OPTION) {
-            disable();
+            dispose();
         }
     }
 }
