@@ -19,6 +19,7 @@ import java.io.*;
  * - 行番号表示
  * - 検索 / 次を検索
  * - 未保存変更の確認
+ * - ステータスバー
  */
 public class TE1Main extends JFrame {
 
@@ -39,6 +40,9 @@ public class TE1Main extends JFrame {
 
     /** 前回検索した文字列 */
     private String lastSearchText;
+
+    /** ステータスバー */
+    private JLabel statusLabel;
 
     /**
      * アプリケーションを起動する。
@@ -84,14 +88,21 @@ public class TE1Main extends JFrame {
         scrollPane.setRowHeaderView(lineNumberArea);
         add(scrollPane, BorderLayout.CENTER);
 
+        // ステータスバー。
+        statusLabel = new JLabel("Ln 1, Col 1");
+        statusLabel.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
+        add(statusLabel, BorderLayout.SOUTH);
+
         // Undo / Redo機能を準備する。
         undoManager = new UndoManager();
 
         // リスナーを登録する。
         registerDocumentListeners();
+        textArea.addCaretListener(e -> updateStatusBar());
 
-        // 初期状態の行番号を表示する。
+        // 初期状態の表示を表示する。
         updateLineNumbers();
+        updateStatusBar();
 
         // メニューを生成する。
         createMenu();
@@ -201,6 +212,7 @@ public class TE1Main extends JFrame {
         undoManager.discardAllEdits();
         updateLineNumbers();
         setTitle("テキストエディタ-1号");
+        updateStatusBar();
     }
 
     /**
@@ -230,6 +242,7 @@ public class TE1Main extends JFrame {
                 e.printStackTrace();
             }
         }
+        updateStatusBar();
     }
 
     /**
@@ -424,5 +437,32 @@ public class TE1Main extends JFrame {
 
         textArea.requestFocus();
         textArea.select(index, index + lastSearchText.length());
+    }
+
+    /**
+     * ステータスバーの表示を更新する。
+     * 
+     * 現在の行番号、列番号、行数、文字数、選択文字数を表示する。
+     */
+    private void updateStatusBar() {
+        try {
+            int caretPos = textArea.getCaretPosition();
+            int line = textArea.getLineOfOffset(caretPos);
+            int lineStart = textArea.getLineStartOffset(line);
+            int column = caretPos - lineStart;
+
+            int lineCount = textArea.getLineCount();
+            int charCount = textArea.getText().length();
+            int selectedCount = textArea.getSelectionEnd() - textArea.getSelectionStart();
+
+            statusLabel.setText(
+                    "Ln " + (line + 1) +
+                            ", Col " + (column + 1) +
+                            " | 行数: " + lineCount +
+                            " | 文字数: " + charCount +
+                            " | 選択: " + selectedCount);
+        } catch (Exception e) {
+            statusLabel.setText("Ln 1, Col 1 | 行数: 1 | 文字数: 0 | 選択: 0");
+        }
     }
 }
