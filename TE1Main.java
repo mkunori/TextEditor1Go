@@ -18,6 +18,8 @@ import java.io.*;
  * - Undo / Redo
  * - 行番号表示
  * - 検索 / 次を検索
+ * - 置換 / すべて置換
+ * - 検索置換ダイアログ
  * - 未保存変更の確認
  * - ステータスバー
  */
@@ -32,7 +34,7 @@ public class TE1Main extends JFrame {
     /** 現在開いているファイル */
     private File currentFile;
 
-    /** Undo / Redo 機能用オブジェクト */
+    /** Undo / Redo 機能 */
     private UndoManager undoManager;
 
     /** 未保存変更があるか */
@@ -43,6 +45,15 @@ public class TE1Main extends JFrame {
 
     /** ステータスバー */
     private JLabel statusLabel;
+
+    /** 検索置換ダイアログ */
+    private JDialog searchReplaceDialog;
+
+    /** 検索文字列入力欄 */
+    private JTextField searchField;
+
+    /** 置換文字列入力欄 */
+    private JTextField replaceField;
 
     /**
      * アプリケーションを起動する。
@@ -58,7 +69,7 @@ public class TE1Main extends JFrame {
     /**
      * メインウィンドウを初期化する。
      *
-     * テキストエリア、行番号エリア、Undo / Redo機能、
+     * テキストエリア、行番号エリア、Undo / Redo 機能、
      * メニューバーを生成する。
      */
     public TE1Main() {
@@ -93,7 +104,7 @@ public class TE1Main extends JFrame {
         statusLabel.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
         add(statusLabel, BorderLayout.SOUTH);
 
-        // Undo / Redo機能を準備する。
+        // Undo / Redo 機能を準備する。
         undoManager = new UndoManager();
 
         // リスナーを登録する。
@@ -152,8 +163,8 @@ public class TE1Main extends JFrame {
         redoItem.addActionListener(e -> redo());
         findItem.addActionListener(e -> findText());
         findNextItem.addActionListener(e -> findNextText());
-        replaceItem.addActionListener(e -> replaceText());
-        replaceAllItem.addActionListener(e -> replaceAllText());
+        replaceItem.addActionListener(e -> showSearchReplaceDialog());
+        replaceAllItem.addActionListener(e -> showSearchReplaceDialog());
         undoItem.setAccelerator(KeyStroke.getKeyStroke("control Z"));
         redoItem.setAccelerator(KeyStroke.getKeyStroke("control Y"));
         findItem.setAccelerator(KeyStroke.getKeyStroke("control F"));
@@ -178,7 +189,7 @@ public class TE1Main extends JFrame {
     }
 
     /**
-     * Document にリスナーを登録する。
+     * Document に各種リスナーを登録する。
      */
     private void registerDocumentListeners() {
         registerLineNumberListener();
@@ -214,7 +225,7 @@ public class TE1Main extends JFrame {
      * 新規ファイルを作成する。
      * 
      * テキスト内容を空にし、現在のファイル情報をリセットする。
-     * また Undo / Redo の履歴もクリアする。
+     * また Undo / Redo 機能の履歴もクリアする。
      */
     public void newFile() {
         textArea.setText("");
@@ -243,7 +254,7 @@ public class TE1Main extends JFrame {
 
                 setModified(false);
 
-                // 新たに開いた直後はUndo / Redoが無いはずなので過去の履歴を削除する。
+                // 新たに開いた直後は Undo / Redo 機能が無いはずなので過去の履歴を削除する。
                 undoManager.discardAllEdits();
 
                 // 新しい Document にはリスナー登録が無いので再登録する。
@@ -325,7 +336,7 @@ public class TE1Main extends JFrame {
     }
 
     /**
-     * ウィンドウタイトルを更新する。
+     * 現在の状態に応じてウィンドウタイトルを更新する。
      */
     private void updateTitle() {
         String title;
@@ -344,12 +355,7 @@ public class TE1Main extends JFrame {
     }
 
     /**
-     * 未保存変更状態を設定する。
-     * 
-     * 編集による変更の有無を管理するフラグを設定し、
-     * タイトルバーの表示（* の有無）を更新する。
-     * 
-     * @param modified 未保存変更がある場合は true
+     * 未保存変更状態を設定し、タイトル表示を更新する。
      */
     private void setModified(boolean modified) {
         this.modified = modified;
@@ -357,7 +363,7 @@ public class TE1Main extends JFrame {
     }
 
     /**
-     * ウィンドウを閉じる前に未保存変更を確認する。
+     * 未保存変更がある場合に、終了前の確認ダイアログを表示する。
      */
     private void confirmClose() {
         if (!modified) {
@@ -447,14 +453,12 @@ public class TE1Main extends JFrame {
             return;
         }
 
-        textArea.requestFocus();
+        textArea.requestFocusInWindow();
         textArea.select(index, index + lastSearchText.length());
     }
 
     /**
      * ステータスバーの表示を更新する。
-     * 
-     * 現在の行番号、列番号、行数、文字数、選択文字数を表示する。
      */
     private void updateStatusBar() {
         try {
@@ -479,31 +483,71 @@ public class TE1Main extends JFrame {
     }
 
     /**
-     * 検索文字列を置換文字列に置き換える。
-     * 
-     * 検索は現在のカーソル位置から開始し、
-     * テキスト末尾まで見つからなかった場合は
-     * テキスト戦闘から再検索する。
+     * 検索置換ダイアログを表示する。
+     *
+     * 初回呼び出し時にダイアログを生成し、以降は再利用する。
      */
-    public void replaceText() {
-        String searchText = JOptionPane.showInputDialog(this, "検索する文字列を入力してください。");
-        if (searchText == null || searchText.isEmpty()) {
+    public void showSearchReplaceDialog() {
+        if (searchReplaceDialog == null) {
+            searchReplaceDialog = new JDialog(this, "検索 / 置換", false);
+            searchReplaceDialog.setSize(400, 150);
+            searchReplaceDialog.setLocationRelativeTo(this);
+
+            searchField = new JTextField(20);
+            replaceField = new JTextField(20);
+
+            JPanel inputPanel = new JPanel(new GridLayout(2, 2, 5, 5));
+            inputPanel.add(new JLabel("検索"));
+            inputPanel.add(searchField);
+            inputPanel.add(new JLabel("置換"));
+            inputPanel.add(replaceField);
+
+            JButton findNextButton = new JButton("次を検索");
+            JButton replaceButton = new JButton("置換");
+            JButton replaceAllButton = new JButton("すべて置換");
+            JButton closeButton = new JButton("閉じる");
+
+            JPanel buttonPanel = new JPanel();
+            buttonPanel.add(findNextButton);
+            buttonPanel.add(replaceButton);
+            buttonPanel.add(replaceAllButton);
+            buttonPanel.add(closeButton);
+
+            findNextButton.addActionListener(e -> findFromDialog());
+            replaceButton.addActionListener(e -> replaceFromDialog());
+            replaceAllButton.addActionListener(e -> replaceAllFromDialog());
+            closeButton.addActionListener(e -> searchReplaceDialog.setVisible(false));
+
+            searchReplaceDialog.setLayout(new BorderLayout(5, 5));
+            searchReplaceDialog.add(inputPanel, BorderLayout.CENTER);
+            searchReplaceDialog.add(buttonPanel, BorderLayout.SOUTH);
+        }
+
+        if (lastSearchText != null) {
+            searchField.setText(lastSearchText);
+        }
+
+        searchReplaceDialog.setVisible(true);
+    }
+
+    /**
+     * ダイアログに入力された検索文字列で検索を行う。
+     */
+    private void findFromDialog() {
+        String keyword = searchField.getText();
+
+        if (keyword == null || keyword.isEmpty()) {
             return;
         }
 
-        String replacementText = JOptionPane.showInputDialog(this, "置換後の文字列を入力してください。");
-        // "abc" -> "" のように削除置換する可能性もあるためここではnullのみチェックしている。
-        if (replacementText == null) {
-            return;
-        }
+        lastSearchText = keyword;
 
         String text = textArea.getText();
         int startIndex = textArea.getCaretPosition();
-        int index = text.indexOf(searchText, startIndex);
+        int index = text.indexOf(lastSearchText, startIndex);
 
-        // 末尾まで見つからなかった場合は先頭から再検索する。
         if (index < 0) {
-            index = text.indexOf(searchText);
+            index = text.indexOf(lastSearchText);
         }
 
         if (index < 0) {
@@ -511,28 +555,51 @@ public class TE1Main extends JFrame {
             return;
         }
 
-        textArea.requestFocus();
-        textArea.select(index, index + searchText.length());
-        textArea.replaceSelection(replacementText);
-
-        lastSearchText = searchText;
+        textArea.requestFocusInWindow();
+        textArea.select(index, index + lastSearchText.length());
     }
 
     /**
-     * 検索文字列をすべて置換文字列に置き換える。
-     *
-     * 検索文字列と置換文字列を入力し、
-     * 本文中の一致箇所をすべて置換する。
+     * ダイアログに入力された検索文字列を1件置換する。
      */
-    public void replaceAllText() {
-        String searchText = JOptionPane.showInputDialog(this, "検索する文字列を入力してください。");
+    private void replaceFromDialog() {
+        String searchText = searchField.getText();
+        String replacementText = replaceField.getText();
+
         if (searchText == null || searchText.isEmpty()) {
             return;
         }
 
-        String replacementText = JOptionPane.showInputDialog(this, "置換後の文字列を入力してください。");
-        // "abc" -> "" のように削除置換する可能性もあるためここではnullのみチェックしている。
-        if (replacementText == null) {
+        String selectedText = textArea.getSelectedText();
+
+        // いま選択中の文字列が一致していなければ、まず検索する。
+        if (selectedText == null || !selectedText.equals(searchText)) {
+            findFromDialog();
+            selectedText = textArea.getSelectedText();
+        }
+
+        // 検索しても一致箇所が無ければ終了する。
+        if (selectedText == null || !selectedText.equals(searchText)) {
+            return;
+        }
+
+        textArea.requestFocusInWindow();
+        textArea.replaceSelection(replacementText);
+
+        lastSearchText = searchText;
+
+        // 置換後に次の一致箇所を検索する。
+        findNextText();
+    }
+
+    /**
+     * ダイアログに入力された検索文字列をすべて置換する。
+     */
+    private void replaceAllFromDialog() {
+        String searchText = searchField.getText();
+        String replacementText = replaceField.getText();
+
+        if (searchText == null || searchText.isEmpty()) {
             return;
         }
 
@@ -546,7 +613,6 @@ public class TE1Main extends JFrame {
         while ((index = text.indexOf(searchText, fromIndex)) >= 0) {
             sb.append(text, fromIndex, index);
             sb.append(replacementText);
-
             fromIndex = index + searchText.length();
             count++;
         }
@@ -560,6 +626,7 @@ public class TE1Main extends JFrame {
         textArea.setText(sb.toString());
 
         lastSearchText = searchText;
+        textArea.requestFocusInWindow();
 
         JOptionPane.showMessageDialog(this, count + "件置換しました。");
     }
