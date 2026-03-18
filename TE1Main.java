@@ -145,21 +145,33 @@ public class TE1Main extends JFrame {
         JMenuItem redoItem = new JMenuItem("やり直す");
         JMenuItem findItem = new JMenuItem("検索");
         JMenuItem findNextItem = new JMenuItem("次を検索");
+        JMenuItem replaceItem = new JMenuItem("置換");
+        JMenuItem replaceAllItem = new JMenuItem("すべて置換");
 
         undoItem.addActionListener(e -> undo());
         redoItem.addActionListener(e -> redo());
         findItem.addActionListener(e -> findText());
         findNextItem.addActionListener(e -> findNextText());
+        replaceItem.addActionListener(e -> replaceText());
+        replaceAllItem.addActionListener(e -> replaceAllText());
         undoItem.setAccelerator(KeyStroke.getKeyStroke("control Z"));
         redoItem.setAccelerator(KeyStroke.getKeyStroke("control Y"));
         findItem.setAccelerator(KeyStroke.getKeyStroke("control F"));
         findNextItem.setAccelerator(KeyStroke.getKeyStroke("F3"));
+        // Ctrl+H は JTextArea のデフォルトで「バックスペース（削除）」に割り当てられているため、
+        // ショートカットが競合して文字が削除されてしまう。
+        // そのため置換は Ctrl+R に変更している。
+        replaceItem.setAccelerator(KeyStroke.getKeyStroke("control R"));
+        replaceAllItem.setAccelerator(KeyStroke.getKeyStroke("control shift R"));
 
         editMenu.add(undoItem);
         editMenu.add(redoItem);
         editMenu.addSeparator();
         editMenu.add(findItem);
         editMenu.add(findNextItem);
+        editMenu.add(replaceItem);
+        editMenu.add(replaceAllItem);
+
         menuBar.add(editMenu);
 
         setJMenuBar(menuBar);
@@ -402,7 +414,7 @@ public class TE1Main extends JFrame {
             return;
         }
 
-        textArea.requestFocus();
+        textArea.requestFocusInWindow();
         textArea.select(index, index + lastSearchText.length());
     }
 
@@ -464,5 +476,91 @@ public class TE1Main extends JFrame {
         } catch (Exception e) {
             statusLabel.setText("Ln 1, Col 1 | 行数: 1 | 文字数: 0 | 選択: 0");
         }
+    }
+
+    /**
+     * 検索文字列を置換文字列に置き換える。
+     * 
+     * 検索は現在のカーソル位置から開始し、
+     * テキスト末尾まで見つからなかった場合は
+     * テキスト戦闘から再検索する。
+     */
+    public void replaceText() {
+        String searchText = JOptionPane.showInputDialog(this, "検索する文字列を入力してください。");
+        if (searchText == null || searchText.isEmpty()) {
+            return;
+        }
+
+        String replacementText = JOptionPane.showInputDialog(this, "置換後の文字列を入力してください。");
+        // "abc" -> "" のように削除置換する可能性もあるためここではnullのみチェックしている。
+        if (replacementText == null) {
+            return;
+        }
+
+        String text = textArea.getText();
+        int startIndex = textArea.getCaretPosition();
+        int index = text.indexOf(searchText, startIndex);
+
+        // 末尾まで見つからなかった場合は先頭から再検索する。
+        if (index < 0) {
+            index = text.indexOf(searchText);
+        }
+
+        if (index < 0) {
+            JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
+            return;
+        }
+
+        textArea.requestFocus();
+        textArea.select(index, index + searchText.length());
+        textArea.replaceSelection(replacementText);
+
+        lastSearchText = searchText;
+    }
+
+    /**
+     * 検索文字列をすべて置換文字列に置き換える。
+     *
+     * 検索文字列と置換文字列を入力し、
+     * 本文中の一致箇所をすべて置換する。
+     */
+    public void replaceAllText() {
+        String searchText = JOptionPane.showInputDialog(this, "検索する文字列を入力してください。");
+        if (searchText == null || searchText.isEmpty()) {
+            return;
+        }
+
+        String replacementText = JOptionPane.showInputDialog(this, "置換後の文字列を入力してください。");
+        // "abc" -> "" のように削除置換する可能性もあるためここではnullのみチェックしている。
+        if (replacementText == null) {
+            return;
+        }
+
+        String text = textArea.getText();
+        StringBuilder sb = new StringBuilder();
+
+        int count = 0;
+        int fromIndex = 0;
+        int index;
+
+        while ((index = text.indexOf(searchText, fromIndex)) >= 0) {
+            sb.append(text, fromIndex, index);
+            sb.append(replacementText);
+
+            fromIndex = index + searchText.length();
+            count++;
+        }
+
+        if (count == 0) {
+            JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
+            return;
+        }
+
+        sb.append(text.substring(fromIndex));
+        textArea.setText(sb.toString());
+
+        lastSearchText = searchText;
+
+        JOptionPane.showMessageDialog(this, count + "件置換しました。");
     }
 }

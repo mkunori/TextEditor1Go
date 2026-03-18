@@ -8,4 +8,6 @@
   - 元に戻す (Ctrl + Z)
   - やり直す (Ctrl + Y)
   - 検索 (Ctrl + F)
+  - 置換 (Ctrl + R)
+  - すべて置換 (Ctrl + Shift + R)
 - 未保存変更の確認
