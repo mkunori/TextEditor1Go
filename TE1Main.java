@@ -31,17 +31,14 @@ public class TE1Main extends JFrame {
     /** 行番号エリア */
     private JTextArea lineNumberArea;
 
-    /** 現在開いているファイル */
-    private File currentFile;
+    /** エディタの状態を管理するモデル */
+    private TE1EditorModel model;
 
     /** Undo / Redo 機能 */
     private UndoManager undoManager;
 
     /** Undo 編集補助 */
     private TE1UndoSupport undoSupport;
-
-    /** 未保存変更があるか */
-    private boolean modified = false;
 
     /** ステータスバー */
     private JLabel statusLabel;
@@ -81,6 +78,8 @@ public class TE1Main extends JFrame {
                 confirmClose();
             }
         });
+
+        model = new TE1EditorModel();
 
         // 本文用エリア。
         textArea = new JTextArea();
@@ -230,7 +229,7 @@ public class TE1Main extends JFrame {
      */
     public void newFile() {
         textArea.setText("");
-        currentFile = null;
+        setCurrentFile(null);
         setModified(false);
 
         undoManager.discardAllEdits();
@@ -247,9 +246,9 @@ public class TE1Main extends JFrame {
     public void openFile() {
         JFileChooser chooser = new JFileChooser();
         if (chooser.showOpenDialog(this) == JFileChooser.APPROVE_OPTION) {
-            currentFile = chooser.getSelectedFile();
+            setCurrentFile(chooser.getSelectedFile());
 
-            try (BufferedReader br = new BufferedReader(new FileReader(currentFile))) {
+            try (BufferedReader br = new BufferedReader(new FileReader(model.getCurrentFile()))) {
                 textArea.read(br, null);
 
                 setModified(false);
@@ -271,16 +270,16 @@ public class TE1Main extends JFrame {
     /**
      * 現在のファイルにテキスト内容を保存する。
      *
-     * 保存先が未指定、または元ファイルが存在しない場合は、
+     * 保存先が未指定の場合は、
      * 「名前を付けて保存」の処理に切り替える。
      */
     public void saveFile() {
-        if (currentFile == null || !currentFile.exists()) {
+        if (model.getCurrentFile() == null) {
             saveAsFile();
             return;
         }
 
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(currentFile))) {
+        try (BufferedWriter bw = new BufferedWriter(new FileWriter(model.getCurrentFile()))) {
             textArea.write(bw);
             setModified(false);
         } catch (IOException e) {
@@ -298,7 +297,7 @@ public class TE1Main extends JFrame {
         JFileChooser chooser = new JFileChooser();
 
         if (chooser.showSaveDialog(this) == JFileChooser.APPROVE_OPTION) {
-            currentFile = chooser.getSelectedFile();
+            setCurrentFile(chooser.getSelectedFile());
             saveFile();
         }
     }
@@ -341,13 +340,13 @@ public class TE1Main extends JFrame {
     private void updateTitle() {
         String title;
 
-        if (currentFile == null) {
+        if (model.getCurrentFile() == null) {
             title = "テキストエディタ-1号";
         } else {
-            title = currentFile.getName();
+            title = model.getCurrentFile().getName();
         }
 
-        if (modified) {
+        if (model.isModified()) {
             title += " *";
         }
 
@@ -355,18 +354,10 @@ public class TE1Main extends JFrame {
     }
 
     /**
-     * 未保存変更状態を設定し、タイトル表示を更新する。
-     */
-    private void setModified(boolean modified) {
-        this.modified = modified;
-        updateTitle();
-    }
-
-    /**
      * 未保存変更がある場合に、終了前の確認ダイアログを表示する。
      */
     private void confirmClose() {
-        if (!modified) {
+        if (!model.isModified()) {
             dispose();
             return;
         }
@@ -382,7 +373,7 @@ public class TE1Main extends JFrame {
             saveFile();
 
             // 保存後に未保存状態でなければ閉じる。
-            if (!modified) {
+            if (!model.isModified()) {
                 dispose();
             }
         } else if (result == JOptionPane.NO_OPTION) {
@@ -449,5 +440,25 @@ public class TE1Main extends JFrame {
         }
 
         searchReplaceDialog.setVisible(true);
+    }
+
+    /**
+     * 現在のファイルを設定する。
+     *
+     * ファイル情報を更新し、タイトル表示も更新する。
+     */
+    private void setCurrentFile(File file) {
+        model.setCurrentFile(file);
+        updateTitle();
+    }
+
+    /**
+     * 未保存変更状態を設定する。
+     *
+     * 状態を更新し、タイトル表示（* の有無）も更新する。
+     */
+    private void setModified(boolean modified) {
+        model.setModified(modified);
+        updateTitle();
     }
 }
