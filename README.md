@@ -17,6 +17,7 @@ Swingを用いて開発したシンプルなテキストエディタです。
 
 - 設計（責務分離・MVC）
 - 段階的リファクタリング
+- パッケージ単位で責務を分割し、構造を明確にする
 
 ---
 
@@ -113,24 +114,104 @@ service
 
 ```mermaid
 classDiagram
-    class TE1Main
-    class TE1EditorController
-    class TE1EditorView
-    class TE1EditorModel
-    class TE1SearchReplaceHandler
-    class TE1SearchService
-    class TE1SearchReplaceDialog
-    class TE1UndoSupport
+    class TE1Main {
+        +main(String[] args)
+    }
 
-    TE1Main --> TE1EditorController
-    TE1EditorController --> TE1EditorView
-    TE1EditorController --> TE1EditorModel
-    TE1EditorController --> TE1UndoSupport
-    TE1EditorController --> TE1SearchReplaceDialog
-    TE1EditorController --> TE1SearchReplaceHandler
-    TE1SearchService ..|> TE1SearchReplaceHandler
-    TE1SearchService --> TE1UndoSupport
-    TE1SearchReplaceDialog --> TE1SearchReplaceHandler
+    class TE1EditorController {
+        -view : TE1EditorView
+        -model : TE1EditorModel
+        -undoManager : UndoManager
+        -undoSupport : TE1UndoSupport
+        -searchReplaceDialog : TE1SearchReplaceDialog
+        -searchService : TE1SearchReplaceHandler
+        +show()
+        +newFile()
+        +openFile()
+        +saveFile()
+        +saveAsFile()
+        +undo()
+        +redo()
+        +findText()
+        +findNextText()
+        +showSearchReplaceDialog()
+        +confirmClose()
+    }
+
+    class TE1EditorView {
+        +updateLineNumbers()
+        +updateStatusBar()
+        +setWindowTitle(String)
+        +getTextArea()
+        +getNewItem()
+        +getOpenItem()
+        +getSaveItem()
+        +getSaveAsItem()
+        +getUndoItem()
+        +getRedoItem()
+        +getFindItem()
+        +getFindNextItem()
+        +getReplaceItem()
+        +getReplaceAllItem()
+    }
+
+    class TE1EditorModel {
+        -currentFile : File
+        -modified : boolean
+        +getCurrentFile()
+        +setCurrentFile(File)
+        +isModified()
+        +setModified(boolean)
+    }
+
+    class TE1SearchReplaceDialog {
+        -searchField : JTextField
+        -replaceField : JTextField
+        -searchHandler : TE1SearchReplaceHandler
+        +setSearchText(String)
+    }
+
+    class TE1SearchReplaceHandler {
+        <<interface>>
+        +findText(String)
+        +findNextText()
+        +replaceText(String, String)
+        +replaceAllText(String, String)
+        +getLastSearchText()
+    }
+
+    class TE1SearchService {
+        -textArea : JTextArea
+        -parent : Component
+        -lastSearchText : String
+        -undoSupport : TE1UndoSupport
+        +getLastSearchText()
+        +findText(String)
+        +findNextText()
+        +replaceText(String, String)
+        +replaceAllText(String, String)
+    }
+
+    class TE1UndoSupport {
+        -undoManager : UndoManager
+        -compoundEdit : CompoundEdit
+        +undoableEditHappened(UndoableEditEvent)
+        +beginCompoundEdit()
+        +endCompoundEdit()
+    }
+
+    TE1Main --> TE1EditorController : creates
+
+    TE1EditorController --> TE1EditorView : uses
+    TE1EditorController --> TE1EditorModel : uses
+    TE1EditorController --> TE1UndoSupport : uses
+    TE1EditorController --> TE1SearchReplaceDialog : opens
+    TE1EditorController --> TE1SearchReplaceHandler : delegates
+
+    TE1SearchReplaceDialog --> TE1SearchReplaceHandler : delegates
+    TE1SearchService --> TE1UndoSupport : uses
+
+    TE1SearchReplaceHandler <|.. TE1SearchService
 ```
 
 ---
@@ -142,7 +223,6 @@ classDiagram
 - Model の責務強化
 - Model から View への通知（Observerパターンの導入）
 - クラス分割の最適化
-- パッケージ単位で責務を分割し、構造を明確にする
 
 ### ● 機能
 - 正規表現検索
