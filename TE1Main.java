@@ -37,6 +37,9 @@ public class TE1Main extends JFrame {
     /** Undo / Redo 機能 */
     private UndoManager undoManager;
 
+    /** Undo 編集補助 */
+    private TE1UndoSupport undoSupport;
+
     /** 未保存変更があるか */
     private boolean modified = false;
 
@@ -100,6 +103,7 @@ public class TE1Main extends JFrame {
 
         // Undo / Redo 機能を生成する。
         undoManager = new UndoManager();
+        undoSupport = new TE1UndoSupport(undoManager);
 
         // リスナーを登録する。
         registerDocumentListeners();
@@ -110,7 +114,7 @@ public class TE1Main extends JFrame {
         updateStatusBar();
 
         // 検索機能を生成する。
-        searchService = new TE1SearchService(textArea, this);
+        searchService = new TE1SearchService(textArea, this, undoSupport);
 
         // メニューを生成する。
         createMenu();
@@ -190,7 +194,7 @@ public class TE1Main extends JFrame {
      */
     private void registerDocumentListeners() {
         registerLineNumberListener();
-        textArea.getDocument().addUndoableEditListener(undoManager);
+        textArea.getDocument().addUndoableEditListener(undoSupport);
     }
 
     /**

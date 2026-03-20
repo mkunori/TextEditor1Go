@@ -19,15 +19,20 @@ public class TE1SearchService implements TE1SearchReplaceHandler {
     /** 前回検索した文字列 */
     private String lastSearchText;
 
+    /** Undo 編集補助 */
+    private final TE1UndoSupport undoSupport;
+
     /**
      * 検索・置換サービスを初期化する。
      *
-     * @param textArea 検索対象のテキストエリア
-     * @param parent   メッセージダイアログ表示用の親コンポーネント
+     * @param textArea    検索対象のテキストエリア
+     * @param parent      メッセージダイアログ表示用の親コンポーネント
+     * @param undoSupport Undo 編集補助
      */
-    public TE1SearchService(JTextArea textArea, Component parent) {
+    public TE1SearchService(JTextArea textArea, Component parent, TE1UndoSupport undoSupport) {
         this.textArea = textArea;
         this.parent = parent;
+        this.undoSupport = undoSupport;
     }
 
     /**
@@ -157,22 +162,34 @@ public class TE1SearchService implements TE1SearchReplaceHandler {
 
             int count = 0;
             int index = 0;
+            boolean started = false;
 
-            while ((index = text.indexOf(searchText, index)) >= 0) {
-                // 一致箇所を削除。
-                doc.remove(index, searchText.length());
+            try {
+                while ((index = text.indexOf(searchText, index)) >= 0) {
+                    if (!started) {
+                        undoSupport.beginCompoundEdit();
+                        started = true;
+                    }
 
-                // 置換文字列を挿入。
-                doc.insertString(index, replacementText, null);
+                    // 一致箇所を削除する。
+                    doc.remove(index, searchText.length());
 
-                // 次の検索位置を進める。
-                index += replacementText.length();
+                    // 置換文字列を挿入する。
+                    doc.insertString(index, replacementText, null);
 
-                // replaceで文字列が変わりindexがずれるため、
-                // 毎回テキストも更新する。
-                text = doc.getText(0, doc.getLength());
+                    // 次の検索位置を進める。
+                    index += replacementText.length();
 
-                count++;
+                    // replaceで文字列が変わりindexがずれるため、
+                    // 毎回テキストも更新する。
+                    text = doc.getText(0, doc.getLength());
+
+                    count++;
+                }
+            } finally {
+                if (started) {
+                    undoSupport.endCompoundEdit();
+                }
             }
 
             if (count == 0) {
