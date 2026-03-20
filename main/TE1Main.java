@@ -1,4 +1,8 @@
+package main;
+
 import javax.swing.*;
+
+import controller.TE1EditorController;
 
 /**
  * TextEditor1Go を起動するクラス。

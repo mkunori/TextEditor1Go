@@ -1,4 +1,9 @@
+package view;
+
 import javax.swing.*;
+
+import service.TE1SearchReplaceHandler;
+
 import java.awt.*;
 
 /**

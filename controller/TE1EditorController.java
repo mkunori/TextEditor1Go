@@ -1,7 +1,17 @@
+package controller;
+
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
 import javax.swing.undo.UndoManager;
+
+import model.TE1EditorModel;
+import service.TE1SearchReplaceHandler;
+import service.TE1SearchService;
+import service.TE1UndoSupport;
+import view.TE1EditorView;
+import view.TE1SearchReplaceDialog;
+
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.io.*;

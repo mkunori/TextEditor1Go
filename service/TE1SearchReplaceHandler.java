@@ -1,3 +1,5 @@
+package service;
+
 /**
  * TextEditor1Go の検索・置換機能を表すインターフェース。
  *
