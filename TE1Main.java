@@ -47,13 +47,10 @@ public class TE1Main extends JFrame {
     private JLabel statusLabel;
 
     /** 検索置換ダイアログ */
-    private JDialog searchReplaceDialog;
+    private TE1SearchReplaceDialog searchReplaceDialog;
 
-    /** 検索文字列入力欄 */
-    private JTextField searchField;
-
-    /** 置換文字列入力欄 */
-    private JTextField replaceField;
+    /** 検索機能 */
+    private TE1SearchService searchService;
 
     /**
      * アプリケーションを起動する。
@@ -104,7 +101,7 @@ public class TE1Main extends JFrame {
         statusLabel.setBorder(BorderFactory.createEmptyBorder(2, 6, 2, 6));
         add(statusLabel, BorderLayout.SOUTH);
 
-        // Undo / Redo 機能を準備する。
+        // Undo / Redo 機能を生成する。
         undoManager = new UndoManager();
 
         // リスナーを登録する。
@@ -114,6 +111,9 @@ public class TE1Main extends JFrame {
         // 初期状態の表示を表示する。
         updateLineNumbers();
         updateStatusBar();
+
+        // 検索機能を生成する。
+        searchService = new TE1SearchService(textArea, this);
 
         // メニューを生成する。
         createMenu();
@@ -390,71 +390,16 @@ public class TE1Main extends JFrame {
         }
     }
 
-    /**
-     * 検索文字列を入力して本文から検索する。
-     *
-     * 検索は現在のカーソル位置から開始し、
-     * テキスト末尾まで見つからなかった場合は
-     * テキスト先頭から再検索する。
-     */
     public void findText() {
         String keyword = JOptionPane.showInputDialog(this, "検索する文字列を入力してください。");
 
         if (keyword == null || keyword.isEmpty()) {
             return;
         }
-
-        lastSearchText = keyword;
-
-        String text = textArea.getText();
-        int startIndex = textArea.getCaretPosition();
-        int index = text.indexOf(lastSearchText, startIndex);
-
-        // 末尾まで見つからなかった場合は先頭から再検索する。
-        if (index < 0) {
-            index = text.indexOf(lastSearchText);
-        }
-
-        if (index < 0) {
-            JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
-            return;
-        }
-
-        textArea.requestFocusInWindow();
-        textArea.select(index, index + lastSearchText.length());
     }
 
-    /**
-     * 前回検索した文字列の次の一致位置を検索する。
-     *
-     * 検索は現在の選択範囲の直後から開始し、
-     * テキスト末尾まで見つからなかった場合は
-     * テキスト先頭から再検索する。
-     */
     public void findNextText() {
-        if (lastSearchText == null || lastSearchText.isEmpty()) {
-            JOptionPane.showMessageDialog(this, "先に検索を実行してください。");
-            return;
-        }
-
-        String text = textArea.getText();
-
-        // 現在の選択終了位置から次を検索する。
-        int startIndex = textArea.getSelectionEnd();
-        int index = text.indexOf(lastSearchText, startIndex);
-
-        // 末尾まで見つからなければ先頭から再検索する。
-        if (index < 0) {
-            index = text.indexOf(lastSearchText);
-        }
-
-        if (index < 0) {
-            JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
-            return;
-        }
-
-        textArea.requestFocusInWindow();
-        textArea.select(index, index + lastSearchText.length());
+        searchService.findNextText();
     }
 
     /**
@@ -484,47 +429,14 @@ public class TE1Main extends JFrame {
 
     /**
      * 検索置換ダイアログを表示する。
-     *
-     * 初回呼び出し時にダイアログを生成し、以降は再利用する。
      */
     public void showSearchReplaceDialog() {
         if (searchReplaceDialog == null) {
-            searchReplaceDialog = new JDialog(this, "検索 / 置換", false);
-            searchReplaceDialog.setSize(400, 150);
-            searchReplaceDialog.setLocationRelativeTo(this);
-
-            searchField = new JTextField(20);
-            replaceField = new JTextField(20);
-
-            JPanel inputPanel = new JPanel(new GridLayout(2, 2, 5, 5));
-            inputPanel.add(new JLabel("検索"));
-            inputPanel.add(searchField);
-            inputPanel.add(new JLabel("置換"));
-            inputPanel.add(replaceField);
-
-            JButton findNextButton = new JButton("次を検索");
-            JButton replaceButton = new JButton("置換");
-            JButton replaceAllButton = new JButton("すべて置換");
-            JButton closeButton = new JButton("閉じる");
-
-            JPanel buttonPanel = new JPanel();
-            buttonPanel.add(findNextButton);
-            buttonPanel.add(replaceButton);
-            buttonPanel.add(replaceAllButton);
-            buttonPanel.add(closeButton);
-
-            findNextButton.addActionListener(e -> findFromDialog());
-            replaceButton.addActionListener(e -> replaceFromDialog());
-            replaceAllButton.addActionListener(e -> replaceAllFromDialog());
-            closeButton.addActionListener(e -> searchReplaceDialog.setVisible(false));
-
-            searchReplaceDialog.setLayout(new BorderLayout(5, 5));
-            searchReplaceDialog.add(inputPanel, BorderLayout.CENTER);
-            searchReplaceDialog.add(buttonPanel, BorderLayout.SOUTH);
+            searchReplaceDialog = new TE1SearchReplaceDialog(this);
         }
 
         if (lastSearchText != null) {
-            searchField.setText(lastSearchText);
+            searchReplaceDialog.setSearchText(lastSearchText);
         }
 
         searchReplaceDialog.setVisible(true);
@@ -533,101 +445,33 @@ public class TE1Main extends JFrame {
     /**
      * ダイアログに入力された検索文字列で検索を行う。
      */
-    private void findFromDialog() {
-        String keyword = searchField.getText();
+    public void findFromDialog() {
+        String keyword = searchReplaceDialog.getSearchText();
 
         if (keyword == null || keyword.isEmpty()) {
             return;
         }
 
-        lastSearchText = keyword;
-
-        String text = textArea.getText();
-        int startIndex = textArea.getCaretPosition();
-        int index = text.indexOf(lastSearchText, startIndex);
-
-        if (index < 0) {
-            index = text.indexOf(lastSearchText);
-        }
-
-        if (index < 0) {
-            JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
-            return;
-        }
-
-        textArea.requestFocusInWindow();
-        textArea.select(index, index + lastSearchText.length());
+        searchService.findText(keyword);
     }
 
     /**
      * ダイアログに入力された検索文字列を1件置換する。
      */
-    private void replaceFromDialog() {
-        String searchText = searchField.getText();
-        String replacementText = replaceField.getText();
+    public void replaceFromDialog() {
+        String searchText = searchReplaceDialog.getSearchText();
+        String replacementText = searchReplaceDialog.getReplaceText();
 
-        if (searchText == null || searchText.isEmpty()) {
-            return;
-        }
-
-        String selectedText = textArea.getSelectedText();
-
-        // いま選択中の文字列が一致していなければ、まず検索する。
-        if (selectedText == null || !selectedText.equals(searchText)) {
-            findFromDialog();
-            selectedText = textArea.getSelectedText();
-        }
-
-        // 検索しても一致箇所が無ければ終了する。
-        if (selectedText == null || !selectedText.equals(searchText)) {
-            return;
-        }
-
-        textArea.requestFocusInWindow();
-        textArea.replaceSelection(replacementText);
-
-        lastSearchText = searchText;
-
-        // 置換後に次の一致箇所を検索する。
-        findNextText();
+        searchService.replaceText(searchText, replacementText);
     }
 
     /**
      * ダイアログに入力された検索文字列をすべて置換する。
      */
-    private void replaceAllFromDialog() {
-        String searchText = searchField.getText();
-        String replacementText = replaceField.getText();
+    public void replaceAllFromDialog() {
+        String searchText = searchReplaceDialog.getSearchText();
+        String replacementText = searchReplaceDialog.getReplaceText();
 
-        if (searchText == null || searchText.isEmpty()) {
-            return;
-        }
-
-        String text = textArea.getText();
-        StringBuilder sb = new StringBuilder();
-
-        int count = 0;
-        int fromIndex = 0;
-        int index;
-
-        while ((index = text.indexOf(searchText, fromIndex)) >= 0) {
-            sb.append(text, fromIndex, index);
-            sb.append(replacementText);
-            fromIndex = index + searchText.length();
-            count++;
-        }
-
-        if (count == 0) {
-            JOptionPane.showMessageDialog(this, "文字列が見つかりませんでした。");
-            return;
-        }
-
-        sb.append(text.substring(fromIndex));
-        textArea.setText(sb.toString());
-
-        lastSearchText = searchText;
-        textArea.requestFocusInWindow();
-
-        JOptionPane.showMessageDialog(this, count + "件置換しました。");
+        searchService.replaceAllText(searchText, replacementText);
     }
 }
