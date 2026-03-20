@@ -1,6 +1,9 @@
 import javax.swing.*;
 import java.awt.*;
 
+/**
+ * TextEditor1Go の検索置換ダイアログ。
+ */
 public class TE1SearchReplaceDialog extends JDialog {
 
     /** 検索文字列入力欄 */
@@ -9,19 +12,18 @@ public class TE1SearchReplaceDialog extends JDialog {
     /** 置換文字列入力欄 */
     private JTextField replaceField;
 
-    /** 検索機能 */
-    private TE1SearchService searchService;
+    /** 検索・置換機能 */
+    private final TE1SearchReplaceHandler searchHandler;
 
     /**
      * 検索置換ダイアログを生成する。
      *
      * @param owner         親ウィンドウ
-     * @param searchService 検索・置換機能
+     * @param searchHandler 検索・置換機能
      */
-    public TE1SearchReplaceDialog(JFrame owner, TE1SearchService searchService) {
-        this.searchService = searchService;
-
+    public TE1SearchReplaceDialog(JFrame owner, TE1SearchReplaceHandler searchHandler) {
         super(owner, "検索 / 置換", false);
+        this.searchHandler = searchHandler;
 
         setSize(400, 150);
         setLocationRelativeTo(owner);
@@ -46,12 +48,13 @@ public class TE1SearchReplaceDialog extends JDialog {
         buttonPanel.add(replaceAllButton);
         buttonPanel.add(closeButton);
 
-        findNextButton.addActionListener(e -> searchService.findText(
-                searchField.getText()));
-        replaceButton.addActionListener(e -> searchService.replaceText(
+        findNextButton.addActionListener(e -> searchHandler.findText(searchField.getText()));
+
+        replaceButton.addActionListener(e -> searchHandler.replaceText(
                 searchField.getText(),
                 replaceField.getText()));
-        replaceAllButton.addActionListener(e -> searchService.replaceAllText(
+
+        replaceAllButton.addActionListener(e -> searchHandler.replaceAllText(
                 searchField.getText(),
                 replaceField.getText()));
 

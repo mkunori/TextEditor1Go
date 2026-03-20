@@ -6,7 +6,7 @@ import java.awt.*;
  *
  * JTextArea を対象に、検索、次を検索、1件置換、すべて置換を行う。
  */
-public class TE1SearchService {
+public class TE1SearchService implements TE1SearchReplaceHandler {
 
     /** 検索対象のテキストエリア */
     private final JTextArea textArea;
