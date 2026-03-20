@@ -40,9 +40,6 @@ public class TE1Main extends JFrame {
     /** 未保存変更があるか */
     private boolean modified = false;
 
-    /** 前回検索した文字列 */
-    private String lastSearchText;
-
     /** ステータスバー */
     private JLabel statusLabel;
 
@@ -396,6 +393,8 @@ public class TE1Main extends JFrame {
         if (keyword == null || keyword.isEmpty()) {
             return;
         }
+
+        searchService.findText(keyword);
     }
 
     public void findNextText() {
@@ -432,46 +431,14 @@ public class TE1Main extends JFrame {
      */
     public void showSearchReplaceDialog() {
         if (searchReplaceDialog == null) {
-            searchReplaceDialog = new TE1SearchReplaceDialog(this);
+            searchReplaceDialog = new TE1SearchReplaceDialog(this, searchService);
         }
 
+        String lastSearchText = searchService.getLastSearchText();
         if (lastSearchText != null) {
             searchReplaceDialog.setSearchText(lastSearchText);
         }
 
         searchReplaceDialog.setVisible(true);
-    }
-
-    /**
-     * ダイアログに入力された検索文字列で検索を行う。
-     */
-    public void findFromDialog() {
-        String keyword = searchReplaceDialog.getSearchText();
-
-        if (keyword == null || keyword.isEmpty()) {
-            return;
-        }
-
-        searchService.findText(keyword);
-    }
-
-    /**
-     * ダイアログに入力された検索文字列を1件置換する。
-     */
-    public void replaceFromDialog() {
-        String searchText = searchReplaceDialog.getSearchText();
-        String replacementText = searchReplaceDialog.getReplaceText();
-
-        searchService.replaceText(searchText, replacementText);
-    }
-
-    /**
-     * ダイアログに入力された検索文字列をすべて置換する。
-     */
-    public void replaceAllFromDialog() {
-        String searchText = searchReplaceDialog.getSearchText();
-        String replacementText = searchReplaceDialog.getReplaceText();
-
-        searchService.replaceAllText(searchText, replacementText);
     }
 }

@@ -9,13 +9,18 @@ public class TE1SearchReplaceDialog extends JDialog {
     /** 置換文字列入力欄 */
     private JTextField replaceField;
 
+    /** 検索機能 */
+    private TE1SearchService searchService;
+
     /**
-     * 検索置換ダイアログを表示する。
+     * 検索置換ダイアログを生成する。
      *
-     * 初回呼び出し時にダイアログを生成し、以降は再利用する。
-     * 前回検索した文字列がある場合は、検索欄に初期値をして設定する。
+     * @param owner         親ウィンドウ
+     * @param searchService 検索・置換機能
      */
-    public TE1SearchReplaceDialog(TE1Main owner) {
+    public TE1SearchReplaceDialog(JFrame owner, TE1SearchService searchService) {
+        this.searchService = searchService;
+
         super(owner, "検索 / 置換", false);
 
         setSize(400, 150);
@@ -41,28 +46,20 @@ public class TE1SearchReplaceDialog extends JDialog {
         buttonPanel.add(replaceAllButton);
         buttonPanel.add(closeButton);
 
-        findNextButton.addActionListener(e -> owner.findFromDialog());
-        replaceButton.addActionListener(e -> owner.replaceFromDialog());
-        replaceAllButton.addActionListener(e -> owner.replaceAllFromDialog());
+        findNextButton.addActionListener(e -> searchService.findText(
+                searchField.getText()));
+        replaceButton.addActionListener(e -> searchService.replaceText(
+                searchField.getText(),
+                replaceField.getText()));
+        replaceAllButton.addActionListener(e -> searchService.replaceAllText(
+                searchField.getText(),
+                replaceField.getText()));
+
         closeButton.addActionListener(e -> setVisible(false));
 
         setLayout(new BorderLayout(5, 5));
         add(inputPanel, BorderLayout.CENTER);
         add(buttonPanel, BorderLayout.SOUTH);
-    }
-
-    /**
-     * 検索文字列を取得する。
-     */
-    public String getSearchText() {
-        return searchField.getText();
-    }
-
-    /**
-     * 置換文字列を取得する。
-     */
-    public String getReplaceText() {
-        return replaceField.getText();
     }
 
     /**
