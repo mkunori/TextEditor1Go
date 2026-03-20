@@ -47,7 +47,7 @@ public class TE1Main extends JFrame {
     private TE1SearchReplaceDialog searchReplaceDialog;
 
     /** 検索機能 */
-    private TE1SearchService searchService;
+    private TE1SearchReplaceHandler searchService;
 
     /**
      * アプリケーションを起動する。
@@ -220,18 +220,17 @@ public class TE1Main extends JFrame {
 
     /**
      * 新規ファイルを作成する。
-     * 
+     *
      * テキスト内容を空にし、現在のファイル情報をリセットする。
      * また Undo / Redo 機能の履歴もクリアする。
      */
     public void newFile() {
         textArea.setText("");
         currentFile = null;
-        modified = false;
+        setModified(false);
 
         undoManager.discardAllEdits();
         updateLineNumbers();
-        setTitle("テキストエディタ-1号");
         updateStatusBar();
     }
 
@@ -387,6 +386,9 @@ public class TE1Main extends JFrame {
         }
     }
 
+    /**
+     * 検索文字列を入力して本文から検索する。
+     */
     public void findText() {
         String keyword = JOptionPane.showInputDialog(this, "検索する文字列を入力してください。");
 
@@ -397,6 +399,9 @@ public class TE1Main extends JFrame {
         searchService.findText(keyword);
     }
 
+    /**
+     * 前回検索した文字列の次の一致位置を検索する。
+     */
     public void findNextText() {
         searchService.findNextText();
     }
