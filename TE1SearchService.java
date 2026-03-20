@@ -1,4 +1,6 @@
 import javax.swing.*;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.Document;
 import java.awt.*;
 
 /**
@@ -148,30 +150,43 @@ public class TE1SearchService implements TE1SearchReplaceHandler {
             return;
         }
 
-        String text = textArea.getText();
-        StringBuilder sb = new StringBuilder();
+        Document doc = textArea.getDocument();
 
-        int count = 0;
-        int fromIndex = 0;
-        int index;
+        try {
+            String text = doc.getText(0, doc.getLength());
 
-        while ((index = text.indexOf(searchText, fromIndex)) >= 0) {
-            sb.append(text, fromIndex, index);
-            sb.append(replacementText);
-            fromIndex = index + searchText.length();
-            count++;
+            int count = 0;
+            int index = 0;
+
+            while ((index = text.indexOf(searchText, index)) >= 0) {
+                // 一致箇所を削除。
+                doc.remove(index, searchText.length());
+
+                // 置換文字列を挿入。
+                doc.insertString(index, replacementText, null);
+
+                // 次の検索位置を進める。
+                index += replacementText.length();
+
+                // replaceで文字列が変わりindexがずれるため、
+                // 毎回テキストも更新する。
+                text = doc.getText(0, doc.getLength());
+
+                count++;
+            }
+
+            if (count == 0) {
+                JOptionPane.showMessageDialog(parent, "文字列が見つかりませんでした。");
+                return;
+            }
+
+            lastSearchText = searchText;
+            textArea.requestFocusInWindow();
+
+            JOptionPane.showMessageDialog(parent, count + "件置換しました。");
+
+        } catch (BadLocationException e) {
+            e.printStackTrace();
         }
-
-        if (count == 0) {
-            JOptionPane.showMessageDialog(parent, "文字列が見つかりませんでした。");
-            return;
-        }
-
-        sb.append(text.substring(fromIndex));
-        textArea.setText(sb.toString());
-        lastSearchText = searchText;
-        textArea.requestFocusInWindow();
-
-        JOptionPane.showMessageDialog(parent, count + "件置換しました。");
     }
 }
