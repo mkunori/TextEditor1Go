@@ -1,9 +1,12 @@
 # TextEditor1Go
 
 Swingを用いて開発したシンプルなテキストエディタです。  
-機能追加とリファクタリングを繰り返しながら、設計改善（MVC志向）を学習することを目的としています。  
-また、ChatGPTを活用してレビューや改善を行いながら開発を進めています。
+基本的な編集機能に加え、検索・置換やUndo/Redoなどを備えています。  
 
+機能追加とリファクタリングを繰り返しながら、  
+設計改善（MVC志向）を学習することを目的としています。  
+
+また、ChatGPTを活用してレビューや設計相談を行いながら開発を進めています。
 
 ---
 
@@ -14,8 +17,6 @@ Swingを用いて開発したシンプルなテキストエディタです。
 
 - 設計（責務分離・MVC）
 - 段階的リファクタリング
-
-また、開発中はChatGPTを活用し、レビューや設計相談を行いながら改善を進めています。
 
 ---
 
@@ -72,50 +73,74 @@ Swingを用いて開発したシンプルなテキストエディタです。
 
 ### ● UI制御
 - フォーカス制御（requestFocusInWindow）
+- invokeLater によるフォーカス問題の対策
 - ショートカットキーの競合回避
 
 ---
 
 ## ■ クラス構成（現状）
+
 TE1Main  
-└ UI + 一部制御
+└ アプリケーション起動
+
+TE1EditorController  
+└ View と Model の橋渡し  
+└ メニュー操作、ファイル操作、Undo / Redo、検索ダイアログ制御
+
+TE1EditorView  
+└ 画面表示（テキストエリア、行番号、ステータスバー、メニュー）
 
 TE1EditorModel  
 └ 状態管理（currentFile, modified）
 
+TE1SearchReplaceHandler  
+└ 検索・置換機能のインターフェース
+
 TE1SearchService  
-└ 検索・置換ロジック
+└ 検索・置換ロジックの実装
 
 TE1SearchReplaceDialog  
-└ 検索UI
-
-TE1SearchReplaceHandler  
-└ UIとロジックの橋渡し
+└ 検索・置換ダイアログ UI
 
 TE1UndoSupport  
-└ Undo制御
-
-
-※ 今後の設計変更（MVC分離）を前提としているため、UMLは未記載
+└ Undo 制御補助
 
 ---
 
-## ■ 設計方針
+## ■ クラス図（Mermaid）
 
-- 「まず動かす」→「後から分離する」スタイル
-- 責務を徐々に分割し、MVCへ近づける
-- Modelを中心に状態管理を集約
+```mermaid
+classDiagram
+    class TE1Main
+    class TE1EditorController
+    class TE1EditorView
+    class TE1EditorModel
+    class TE1SearchReplaceHandler
+    class TE1SearchService
+    class TE1SearchReplaceDialog
+    class TE1UndoSupport
+
+    TE1Main --> TE1EditorController
+    TE1EditorController --> TE1EditorView
+    TE1EditorController --> TE1EditorModel
+    TE1EditorController --> TE1UndoSupport
+    TE1EditorController --> TE1SearchReplaceDialog
+    TE1EditorController --> TE1SearchReplaceHandler
+    TE1SearchService ..|> TE1SearchReplaceHandler
+    TE1SearchService --> TE1UndoSupport
+    TE1SearchReplaceDialog --> TE1SearchReplaceHandler
+```
 
 ---
 
 ## ■ 今後の改善予定
 
 ### ● 設計
-- Viewクラスの分離
-- Controller導入
-- Modelの責務強化
+- Controller の責務整理
+- Model の責務強化
+- Model から View への通知（Observerパターンの導入）
+- クラス分割の最適化
 
 ### ● 機能
 - 正規表現検索
 - 大文字小文字無視検索
-- シンタックスハイライト
