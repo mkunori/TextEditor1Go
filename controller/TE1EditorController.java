@@ -68,6 +68,7 @@ public class TE1EditorController {
         registerDocumentListeners();
         registerCaretListener();
         registerMenuActions();
+        registerUndoRedoKeyBindings();
 
         view.updateLineNumbers();
         view.updateStatusBar();
@@ -251,6 +252,9 @@ public class TE1EditorController {
 
     /**
      * 直前の編集操作を取り消す。
+     *
+     * Undo 実行後は表示内容も変化するため、
+     * 行番号とステータスバーもあわせて更新する。
      */
     public void undo() {
         if (undoManager.canUndo()) {
@@ -262,6 +266,9 @@ public class TE1EditorController {
 
     /**
      * 取り消した編集操作をやり直す。
+     *
+     * Redo 実行後は表示内容も変化するため、
+     * 行番号とステータスバーもあわせて更新する。
      */
     public void redo() {
         if (undoManager.canRedo()) {
@@ -370,5 +377,38 @@ public class TE1EditorController {
     private void setModified(boolean modified) {
         model.setModified(modified);
         updateTitle();
+    }
+
+    /**
+     * 本文テキストエリアに Undo / Redo のキー割り当てを登録する。
+     *
+     * メニューのアクセラレータだけに依存すると、
+     * 検索・置換ダイアログが前面にある場合に Ctrl+Z / Ctrl+Y が
+     * メイン画面へ届かないことがある。
+     *
+     * そのため、本文エリア自身にもキー操作を登録しておく。
+     */
+    private void registerUndoRedoKeyBindings() {
+        JTextArea textArea = view.getTextArea();
+
+        InputMap inputMap = textArea.getInputMap(JComponent.WHEN_FOCUSED);
+        ActionMap actionMap = textArea.getActionMap();
+
+        inputMap.put(KeyStroke.getKeyStroke("control Z"), "editorUndo");
+        inputMap.put(KeyStroke.getKeyStroke("control Y"), "editorRedo");
+
+        actionMap.put("editorUndo", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                undo();
+            }
+        });
+
+        actionMap.put("editorRedo", new AbstractAction() {
+            @Override
+            public void actionPerformed(java.awt.event.ActionEvent e) {
+                redo();
+            }
+        });
     }
 }

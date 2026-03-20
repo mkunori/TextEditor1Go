@@ -78,32 +78,34 @@ Swingを用いて開発したシンプルなテキストエディタです。
 
 ---
 
-## ■ クラス構成（現状）
+## ■ パッケージ構成（現状）
 
-TE1Main  
-└ アプリケーション起動
+main  
+└ TE1Main  
+　└ アプリケーション起動
 
-TE1EditorController  
-└ View と Model の橋渡し  
-└ メニュー操作、ファイル操作、Undo / Redo、検索ダイアログ制御
+controller  
+└ TE1EditorController  
+　└ View と Model の橋渡し  
+　└ メニュー操作、ファイル操作、Undo / Redo、検索ダイアログ制御
 
-TE1EditorView  
-└ 画面表示（テキストエリア、行番号、ステータスバー、メニュー）
+view  
+├ TE1EditorView  
+│　└ 画面表示（テキストエリア、行番号、ステータスバー、メニュー）  
+└ TE1SearchReplaceDialog  
+　└ 検索・置換ダイアログ UI
 
-TE1EditorModel  
-└ 状態管理（currentFile, modified）
+model  
+└ TE1EditorModel  
+　└ 状態管理（currentFile, modified）
 
-TE1SearchReplaceHandler  
-└ 検索・置換機能のインターフェース
-
-TE1SearchService  
-└ 検索・置換ロジックの実装
-
-TE1SearchReplaceDialog  
-└ 検索・置換ダイアログ UI
-
-TE1UndoSupport  
-└ Undo 制御補助
+service  
+├ TE1SearchReplaceHandler  
+│　└ 検索・置換機能のインターフェース  
+├ TE1SearchService  
+│　└ 検索・置換ロジックの実装  
+└ TE1UndoSupport  
+　└ Undo 制御補助
 
 ---
 
@@ -140,6 +142,7 @@ classDiagram
 - Model の責務強化
 - Model から View への通知（Observerパターンの導入）
 - クラス分割の最適化
+- パッケージ単位で責務を分割し、構造を明確にする
 
 ### ● 機能
 - 正規表現検索

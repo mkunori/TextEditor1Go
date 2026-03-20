@@ -231,7 +231,10 @@ public class TE1SearchService implements TE1SearchReplaceHandler {
             }
 
             lastSearchText = searchText;
-            textArea.requestFocusInWindow();
+
+            // ダイアログ操作の直後はフォーカスがダイアログ側へ残りやすいため、
+            // イベント処理が終わったあとに本文へフォーカスを戻す。
+            SwingUtilities.invokeLater(() -> textArea.requestFocusInWindow());
 
             JOptionPane.showMessageDialog(parent, count + "件置換しました。");
 
