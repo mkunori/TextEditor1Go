@@ -6,6 +6,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.undo.UndoManager;
 
 import model.TE1EditorModel;
+import model.TE1ModelListener;
 import service.TE1SearchReplaceHandler;
 import service.TE1SearchService;
 import service.TE1UndoSupport;
@@ -29,7 +30,7 @@ import java.io.*;
  * 画面そのものの構築は TE1EditorView、
  * 状態保持は TE1EditorModel が担当する。
  */
-public class TE1EditorController {
+public class TE1EditorController implements TE1ModelListener {
 
     /** 画面表示を担当する View */
     private final TE1EditorView view;
@@ -58,6 +59,8 @@ public class TE1EditorController {
     public TE1EditorController() {
         view = new TE1EditorView();
         model = new TE1EditorModel();
+
+        model.addModelListener(this);
 
         undoManager = new UndoManager();
         undoSupport = new TE1UndoSupport(undoManager);
@@ -366,7 +369,6 @@ public class TE1EditorController {
      */
     private void setCurrentFile(File file) {
         model.setCurrentFile(file);
-        updateTitle();
     }
 
     /**
@@ -376,7 +378,6 @@ public class TE1EditorController {
      */
     private void setModified(boolean modified) {
         model.setModified(modified);
-        updateTitle();
     }
 
     /**
@@ -410,5 +411,10 @@ public class TE1EditorController {
                 redo();
             }
         });
+    }
+
+    @Override
+    public void modelChanged(TE1EditorModel model) {
+        updateTitle();
     }
 }

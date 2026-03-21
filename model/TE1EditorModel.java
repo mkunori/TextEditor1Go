@@ -1,6 +1,8 @@
 package model;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * TextEditor1Go の状態を管理するモデルクラス。
@@ -18,6 +20,9 @@ public class TE1EditorModel {
     /** 未保存変更があるかどうか */
     private boolean modified;
 
+    /** 状態変更通知を受け取るリスナー達 */
+    private final List<TE1ModelListener> listeners = new ArrayList<>();
+
     /**
      * 現在開いているファイルを取得する。
      *
@@ -34,6 +39,7 @@ public class TE1EditorModel {
      */
     public void setCurrentFile(File currentFile) {
         this.currentFile = currentFile;
+        notifyListeners();
     }
 
     /**
@@ -52,5 +58,25 @@ public class TE1EditorModel {
      */
     public void setModified(boolean modified) {
         this.modified = modified;
+        notifyListeners();
     }
+
+    /**
+     * モデル変更通知を受け取るリスナーを追加する。
+     * 
+     * @param listener 登録するリスナー
+     */
+    public void addModelListener(TE1ModelListener listener) {
+        listeners.add(listener);
+    }
+
+    /**
+     * 登録済みリスナーへ状態変更を通知する。
+     */
+    private void notifyListeners() {
+        for (TE1ModelListener listener : listeners) {
+            listener.modelChanged(this);
+        }
+    }
+
 }

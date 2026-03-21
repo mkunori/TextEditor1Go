@@ -78,10 +78,11 @@ public class TE1SearchReplaceDialog extends JDialog {
             searchHandler.findNextText();
         });
 
-        replaceButton.addActionListener(e -> searchHandler.replaceText(searchField.getText(), replaceField.getText()));
+        replaceButton.addActionListener(e -> searchHandler.replaceText(
+                searchField.getText(), replaceField.getText()));
 
-        replaceAllButton
-                .addActionListener(e -> searchHandler.replaceAllText(searchField.getText(), replaceField.getText()));
+        replaceAllButton.addActionListener(e -> searchHandler.replaceAllText(
+                searchField.getText(), replaceField.getText()));
 
         closeButton.addActionListener(e -> setVisible(false));
 
