@@ -103,21 +103,24 @@ public class TE1EditorController implements TE1ModelListener {
     /**
      * Document 関連のリスナーを登録する。
      *
-     * - テキスト変更時の表示更新
-     * - Undo 履歴の登録
+     * 初期表示時に現在の Document へ監視処理を接続する。
      */
     private void registerDocumentListeners() {
-        registerLineNumberListener();
-        view.getTextArea().getDocument().addUndoableEditListener(undoSupport);
+        installListenersToCurrentDocument();
     }
 
     /**
-     * テキスト変更時の共通リスナーを登録する。
-     *
-     * 文字の追加・削除が行われたら、
-     * 未保存フラグ、行番号、ステータスバーを更新する。
+     * 現在の Document に対して変更監視用リスナーを登録する。
+     * 
+     * テキスト変更時に以下を行う：
+     * - modified フラグ更新
+     * - 行番号更新
+     * - ステータスバー更新
+     * 
+     * JTextArea.read(...) 実行後は Document が差し替わるため、
+     * このメソッドで再登録する必要がある。
      */
-    private void registerLineNumberListener() {
+    private void installListenersToCurrentDocument() {
         view.getTextArea().getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -206,6 +209,10 @@ public class TE1EditorController implements TE1ModelListener {
 
             try (BufferedReader br = new BufferedReader(new FileReader(selectedFile))) {
                 view.getTextArea().read(br, null);
+
+                // read(...) 後は Document が差し替わることがあるため、
+                // 新しい Documento にリスナーを登録し直す。
+                installListenersToCurrentDocument();
 
                 setCurrentFile(selectedFile);
                 setModified(false);
@@ -358,8 +365,7 @@ public class TE1EditorController implements TE1ModelListener {
                 ? "無題"
                 : model.getCurrentFile().getName();
 
-        String modifiedMark = model.isModified() ? " *" : "";
-        view.setWindowTitle("テキストエディタ-1号 - " + fileName + modifiedMark);
+        view.updateTitle(fileName, model.isModified());
     }
 
     /**

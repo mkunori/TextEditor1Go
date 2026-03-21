@@ -264,4 +264,15 @@ public class TE1EditorView extends JFrame {
     public JMenuItem getReplaceAllItem() {
         return replaceAllItem;
     }
+
+    /**
+     * タイトルを更新する。
+     * 
+     * @param fileName ファイル名
+     * @param modified 未保存変更があるか
+     */
+    public void updateTitle(String fileName, boolean modified) {
+        String modifiedMark = modified ? " *" : "";
+        setTitle("テキストエディタ-1号 - " + fileName + modifiedMark);
+    }
 }
