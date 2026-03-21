@@ -15,20 +15,19 @@ import view.TE1SearchReplaceDialog;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.io.*;
 
 /**
- * TextEditor1Go の制御を担当する Controller クラス。
+ * TextEditor1Go のファイル操作を担当する Controller クラス。
  *
  * このクラスは以下の役割を持つ。
- * - View と Model の生成と接続
- * - メニュー操作やウィンドウ操作への応答
- * - ファイルの新規作成、読み込み、保存
- * - Undo / Redo
- * - 検索 / 置換機能との連携
+ * - 新規作成
+ * - ファイルの読み込み
+ * - 上書き保存
+ * - 名前を付けて保存
+ * - 終了時の保存確認
  *
- * 画面そのものの構築は TE1EditorView、
- * 状態保持は TE1EditorModel が担当する。
+ * 状態更新は Model へ反映し、
+ * タイトル更新などの表示変更は Observer を通じて別途反映される。
  */
 public class TE1EditorController implements TE1ModelListener {
 
@@ -37,6 +36,9 @@ public class TE1EditorController implements TE1ModelListener {
 
     /** エディタの状態を保持する Model */
     private final TE1EditorModel model;
+
+    /** ファイル操作を担当する Controller */
+    private final TE1FileController fileController;
 
     /** Undo / Redo の本体 */
     private final UndoManager undoManager;
@@ -67,6 +69,12 @@ public class TE1EditorController implements TE1ModelListener {
 
         searchService = new TE1SearchService(view.getTextArea(), view, undoSupport);
 
+        fileController = new TE1FileController(
+                view,
+                model,
+                undoManager,
+                this::installListenersToCurrentDocument);
+
         registerWindowListener();
         registerDocumentListeners();
         registerCaretListener();
@@ -95,15 +103,18 @@ public class TE1EditorController implements TE1ModelListener {
         view.addWindowListener(new WindowAdapter() {
             @Override
             public void windowClosing(WindowEvent e) {
-                confirmClose();
+                fileController.confirmClose();
             }
         });
     }
 
     /**
-     * Document 関連のリスナーを登録する。
+     * 現在の Document に対して変更監視リスナーを登録する。
      *
-     * 初期表示時に現在の Document へ監視処理を接続する。
+     * JTextArea.read(...) 実行後は内部の Document が差し替わることがあるため、
+     * 読み込み後は新しい Document に対して再登録する必要がある。
+     *
+     * 現時点では DocumentListener の再登録のみを行う。
      */
     private void registerDocumentListeners() {
         installListenersToCurrentDocument();
@@ -146,7 +157,7 @@ public class TE1EditorController implements TE1ModelListener {
      * 共通化している。
      */
     private void handleDocumentChanged() {
-        setModified(true);
+        model.setModified(true);
         view.updateLineNumbers();
         view.updateStatusBar();
     }
@@ -168,10 +179,10 @@ public class TE1EditorController implements TE1ModelListener {
      * 何をするかは Controller 側で決める。
      */
     private void registerMenuActions() {
-        view.getNewItem().addActionListener(e -> newFile());
-        view.getOpenItem().addActionListener(e -> openFile());
-        view.getSaveItem().addActionListener(e -> saveFile());
-        view.getSaveAsItem().addActionListener(e -> saveAsFile());
+        view.getNewItem().addActionListener(e -> fileController.newFile());
+        view.getOpenItem().addActionListener(e -> fileController.openFile());
+        view.getSaveItem().addActionListener(e -> fileController.saveFile());
+        view.getSaveAsItem().addActionListener(e -> fileController.saveAsFile());
 
         view.getUndoItem().addActionListener(e -> undo());
         view.getRedoItem().addActionListener(e -> redo());
@@ -181,83 +192,6 @@ public class TE1EditorController implements TE1ModelListener {
         // 置換とすべて置換は、どちらも同じ検索置換ダイアログを開く。
         view.getReplaceItem().addActionListener(e -> showSearchReplaceDialog());
         view.getReplaceAllItem().addActionListener(e -> showSearchReplaceDialog());
-    }
-
-    /**
-     * 新規ファイルを作成する。
-     *
-     * テキスト内容、現在ファイル、未保存状態、Undo 履歴を初期化する。
-     */
-    public void newFile() {
-        view.getTextArea().setText("");
-        setCurrentFile(null);
-        setModified(false);
-
-        undoManager.discardAllEdits();
-        view.updateLineNumbers();
-        view.updateStatusBar();
-    }
-
-    /**
-     * ファイルを選択して読み込む。
-     */
-    public void openFile() {
-        JFileChooser chooser = new JFileChooser();
-
-        if (chooser.showOpenDialog(view) == JFileChooser.APPROVE_OPTION) {
-            File selectedFile = chooser.getSelectedFile();
-
-            try (BufferedReader br = new BufferedReader(new FileReader(selectedFile))) {
-                view.getTextArea().read(br, null);
-
-                // read(...) 後は Document が差し替わることがあるため、
-                // 新しい Documento にリスナーを登録し直す。
-                installListenersToCurrentDocument();
-
-                setCurrentFile(selectedFile);
-                setModified(false);
-
-                // 読み込み直後を「編集前の基準状態」にするため、
-                // それ以前の Undo 履歴は破棄する。
-                undoManager.discardAllEdits();
-
-                view.updateLineNumbers();
-                view.updateStatusBar();
-            } catch (IOException e) {
-                JOptionPane.showMessageDialog(view, "ファイルを開けませんでした。");
-            }
-        }
-    }
-
-    /**
-     * 現在のファイルへ保存する。
-     *
-     * 保存先が未設定なら「名前を付けて保存」へ委譲する。
-     */
-    public void saveFile() {
-        if (model.getCurrentFile() == null) {
-            saveAsFile();
-            return;
-        }
-
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(model.getCurrentFile()))) {
-            view.getTextArea().write(bw);
-            setModified(false);
-        } catch (IOException e) {
-            JOptionPane.showMessageDialog(view, "保存に失敗しました。");
-        }
-    }
-
-    /**
-     * 保存先を選択して保存する。
-     */
-    public void saveAsFile() {
-        JFileChooser chooser = new JFileChooser();
-
-        if (chooser.showSaveDialog(view) == JFileChooser.APPROVE_OPTION) {
-            setCurrentFile(chooser.getSelectedFile());
-            saveFile();
-        }
     }
 
     /**
@@ -328,36 +262,6 @@ public class TE1EditorController implements TE1ModelListener {
     }
 
     /**
-     * 終了前に保存確認を行う。
-     *
-     * 未保存変更がない場合はそのまま終了する。
-     */
-    public void confirmClose() {
-        if (!model.isModified()) {
-            view.dispose();
-            return;
-        }
-
-        int result = JOptionPane.showConfirmDialog(
-                view,
-                "変更が保存されていません。保存しますか？",
-                "終了確認",
-                JOptionPane.YES_NO_CANCEL_OPTION);
-
-        if (result == JOptionPane.YES_OPTION) {
-            saveFile();
-
-            // 名前を付けて保存でキャンセルされた場合は、
-            // modified が true のままなので終了しない。
-            if (!model.isModified()) {
-                view.dispose();
-            }
-        } else if (result == JOptionPane.NO_OPTION) {
-            view.dispose();
-        }
-    }
-
-    /**
      * 現在のファイル名と未保存状態をタイトルへ反映する。
      */
     private void updateTitle() {
@@ -366,24 +270,6 @@ public class TE1EditorController implements TE1ModelListener {
                 : model.getCurrentFile().getName();
 
         view.updateTitle(fileName, model.isModified());
-    }
-
-    /**
-     * 現在編集中のファイルを設定する。
-     *
-     * @param file 現在のファイル。新規状態なら null
-     */
-    private void setCurrentFile(File file) {
-        model.setCurrentFile(file);
-    }
-
-    /**
-     * 未保存変更状態を設定する。
-     *
-     * @param modified 未保存変更がある場合は true
-     */
-    private void setModified(boolean modified) {
-        model.setModified(modified);
     }
 
     /**
