@@ -17,17 +17,16 @@ import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 
 /**
- * TextEditor1Go のファイル操作を担当する Controller クラス。
+ * TextEditor1Go 全体の制御を担当する Controller クラス。
  *
  * このクラスは以下の役割を持つ。
- * - 新規作成
- * - ファイルの読み込み
- * - 上書き保存
- * - 名前を付けて保存
- * - 終了時の保存確認
+ * - View、Model、各種 Controller / Service の生成と接続
+ * - Document やキャレットに関する共通イベント登録
+ * - Undo / Redo
+ * - Model の変更通知を受けて View を更新する
  *
- * 状態更新は Model へ反映し、
- * タイトル更新などの表示変更は Observer を通じて別途反映される。
+ * ファイル操作は TE1FileController、
+ * 検索・置換まわりの操作は TE1SearchController が担当する。
  */
 public class TE1EditorController implements TE1ModelListener {
 
@@ -40,14 +39,14 @@ public class TE1EditorController implements TE1ModelListener {
     /** ファイル操作を担当する Controller */
     private final TE1FileController fileController;
 
+    /** 検索・置換まわりを担当する Controller */
+    private final TE1SearchController searchController;
+
     /** Undo / Redo の本体 */
     private final UndoManager undoManager;
 
     /** Undo 用の補助クラス */
     private final TE1UndoSupport undoSupport;
-
-    /** 検索・置換ダイアログ */
-    private TE1SearchReplaceDialog searchReplaceDialog;
 
     /** 検索・置換処理の橋渡し */
     private final TE1SearchReplaceHandler searchService;
@@ -68,6 +67,7 @@ public class TE1EditorController implements TE1ModelListener {
         undoSupport = new TE1UndoSupport(undoManager);
 
         searchService = new TE1SearchService(view.getTextArea(), view, undoSupport);
+        searchController = new TE1SearchController(view, searchService);
 
         fileController = new TE1FileController(
                 view,
@@ -186,12 +186,12 @@ public class TE1EditorController implements TE1ModelListener {
 
         view.getUndoItem().addActionListener(e -> undo());
         view.getRedoItem().addActionListener(e -> redo());
-        view.getFindItem().addActionListener(e -> findText());
-        view.getFindNextItem().addActionListener(e -> findNextText());
+        view.getFindItem().addActionListener(e -> searchController.findText());
+        view.getFindNextItem().addActionListener(e -> searchController.findNextText());
 
         // 置換とすべて置換は、どちらも同じ検索置換ダイアログを開く。
-        view.getReplaceItem().addActionListener(e -> showSearchReplaceDialog());
-        view.getReplaceAllItem().addActionListener(e -> showSearchReplaceDialog());
+        view.getReplaceItem().addActionListener(e -> searchController.showSearchReplaceDialog());
+        view.getReplaceAllItem().addActionListener(e -> searchController.showSearchReplaceDialog());
     }
 
     /**
@@ -220,45 +220,6 @@ public class TE1EditorController implements TE1ModelListener {
             view.updateLineNumbers();
             view.updateStatusBar();
         }
-    }
-
-    /**
-     * 検索文字列を入力して検索する。
-     */
-    public void findText() {
-        String keyword = JOptionPane.showInputDialog(view, "検索する文字列を入力してください。");
-
-        if (keyword == null || keyword.isEmpty()) {
-            return;
-        }
-
-        searchService.findText(keyword);
-    }
-
-    /**
-     * 前回検索した文字列の次の一致位置を検索する。
-     */
-    public void findNextText() {
-        searchService.findNextText();
-    }
-
-    /**
-     * 検索・置換ダイアログを表示する。
-     *
-     * ダイアログは使い回すことで、
-     * 毎回生成するより状態を保持しやすくする。
-     */
-    public void showSearchReplaceDialog() {
-        if (searchReplaceDialog == null) {
-            searchReplaceDialog = new TE1SearchReplaceDialog(view, searchService);
-        }
-
-        String lastSearchText = searchService.getLastSearchText();
-        if (lastSearchText != null) {
-            searchReplaceDialog.setSearchText(lastSearchText);
-        }
-
-        searchReplaceDialog.setVisible(true);
     }
 
     /**
@@ -307,6 +268,8 @@ public class TE1EditorController implements TE1ModelListener {
 
     @Override
     public void modelChanged(TE1EditorModel model) {
+        // Model の状態変更通知を受けたら、
+        // 現在のファイル名と未保存状態をタイトルへ反映する。
         updateTitle();
     }
 }
