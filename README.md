@@ -1,7 +1,8 @@
 # TextEditor1Go
 
 Swingを用いて開発したシンプルなテキストエディタです。  
-基本的な編集機能に加え、検索・置換やUndo/Redoなどを備えています。  
+基本的な編集機能に加え、検索・置換やUndo/Redoを備え、  
+設計改善（MVC・責務分離）を目的として段階的にリファクタリングを行っています。
 
 機能追加とリファクタリングを繰り返しながら、  
 設計改善（MVC志向）を学習することを目的としています。  
@@ -59,39 +60,29 @@ Swingを用いて開発したシンプルなテキストエディタです。
 
 ## ■ 技術的なポイント
 
-### ● Documentモデルの活用
+### ● アーキテクチャ
+- MVC志向の構成
+- Controller分割とService層の導入
+- 責務分離と委譲
+
+### ● 状態管理・通知
+- Observerパターンの導入
+- Model通知の粒度分割（currentFile / modified）
+- UI更新ハブによる表示制御
+
+### ● UI・イベント制御
 - DocumentListenerによる変更検知
-- UI（行番号・ステータスバー）との連動
+- Caret監視とステータスバー連動
+- フォーカス制御・ショートカット競合対策
 
-### ● Undo / Redo
-- UndoManagerの利用
-- CompoundEditによる「まとめUndo」の実装
+### ● 機能実装
+- UndoManagerとCompoundEdit
+- indexOfベースの検索
+- Document直接操作による置換
 
-### ● 検索・置換
-- indexOfベースの検索アルゴリズム
-- Document直接操作による置換処理
-
-### ● 入力バリデーション
-- null（キャンセル）対策
-- 空文字の扱いの明確化
-
-### ● UI制御
-- フォーカス制御（requestFocusInWindow）
-- invokeLater によるフォーカス問題の対策
-- ショートカットキーの競合回避
-
-### ● Observerパターンの導入
-- Modelの状態変更をControllerが通知で受け取る構造を導入
-- ViewはModelを直接参照せず、Controller経由で更新する構成とした
-- 通知を currentFile / modified ごとに分割し、変更内容に応じたUI更新を実現
-- EditorController を UI更新ハブとして整理
-
-### ● Swing内部仕様の理解
-- JTextArea.read(...) 実行後の Document 差し替えに伴うリスナー再登録対応
-
-### ● 責務分離と委譲
-- Controllerは処理の流れを担当し、処理本体はServiceへ委譲
-- File / Search など機能ごとにControllerを分割
+### ● その他
+- Swing内部仕様の理解（Document差し替え）
+- FileServiceによるI/O分離
 
 ---
 
@@ -103,9 +94,9 @@ main
 
 controller  
 ├ TE1EditorController  
-│　└ 全体の制御、各Controllerの接続、Model通知の受信  
+│　└ 全体の制御、各Controllerの接続、Model通知の受信、共通編集イベント管理  
 ├ TE1FileController  
-│　└ ファイル操作（新規作成、読み込み、保存、終了確認）  
+│　└ ファイル操作の制御（新規作成、読み込み、保存、終了確認）  
 └ TE1SearchController  
 　└ 検索・置換UIの制御
 
@@ -120,6 +111,8 @@ model
 　└ 状態管理（currentFile, modified）
 
 service  
+├ TE1FileService  
+│　└ ファイル入出力の実装  
 ├ TE1SearchReplaceHandler  
 │　└ 検索・置換機能のインターフェース  
 ├ TE1SearchService  
@@ -140,6 +133,7 @@ classDiagram
     class TE1EditorView
     class TE1EditorModel
     class TE1ModelListener
+    class TE1FileService
     class TE1SearchReplaceHandler
     class TE1SearchService
     class TE1SearchReplaceDialog
@@ -149,24 +143,25 @@ classDiagram
 
     TE1EditorController --> TE1EditorView
     TE1EditorController --> TE1EditorModel : observes
-    TE1EditorController --> TE1FileController
-    TE1EditorController --> TE1SearchController
-    TE1EditorController --> TE1UndoSupport
+    TE1EditorController --> TE1FileController : delegates
+    TE1EditorController --> TE1SearchController : delegates
+    TE1EditorController --> TE1UndoSupport : uses
     TE1EditorController --> TE1SearchReplaceHandler : uses
 
-    TE1FileController --> TE1EditorView
-    TE1FileController --> TE1EditorModel
+    TE1FileController --> TE1EditorView : uses
+    TE1FileController --> TE1EditorModel : updates
+    TE1FileController --> TE1FileService : delegates
 
-    TE1SearchController --> TE1EditorView
-    TE1SearchController --> TE1SearchReplaceHandler
-    TE1SearchController --> TE1SearchReplaceDialog
+    TE1SearchController --> TE1EditorView : uses
+    TE1SearchController --> TE1SearchReplaceHandler : delegates
+    TE1SearchController --> TE1SearchReplaceDialog : manages
 
     TE1EditorController ..|> TE1ModelListener
-    TE1EditorModel --> TE1ModelListener
+    TE1EditorModel --> TE1ModelListener : notifies
 
     TE1SearchService ..|> TE1SearchReplaceHandler
-    TE1SearchService --> TE1UndoSupport
-    TE1SearchReplaceDialog --> TE1SearchReplaceHandler
+    TE1SearchService --> TE1UndoSupport : uses
+    TE1SearchReplaceDialog --> TE1SearchReplaceHandler : delegates
 ```
 
 ---
@@ -174,10 +169,9 @@ classDiagram
 ## ■ 今後の改善予定
 
 ### ● 設計
-- Controller の責務整理
-- Model の責務強化
-- Model通知のさらなる活用（通知ごとのUI更新の最適化）
-- クラス分割の最適化
+### ● 設計
+- 編集イベント（Document / Caret）の責務分離検討
+- Service層の整理と拡張（File / Search以外への適用）
 
 ### ● 機能
 - 正規表現検索

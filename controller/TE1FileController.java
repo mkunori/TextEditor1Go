@@ -12,6 +12,7 @@ import javax.swing.JOptionPane;
 import javax.swing.undo.UndoManager;
 
 import model.TE1EditorModel;
+import service.TE1FileService;
 import view.TE1EditorView;
 
 /**
@@ -38,6 +39,9 @@ public class TE1FileController {
     /** Undo / Redo の本体 */
     private final UndoManager undoManager;
 
+    /** ファイル読み書きの本体 */
+    private final TE1FileService fileService;
+
     /**
      * Document のリスナーを再登録するためのコールバック。
      *
@@ -61,10 +65,12 @@ public class TE1FileController {
             TE1EditorView view,
             TE1EditorModel model,
             UndoManager undoManager,
+            TE1FileService fileService,
             Runnable documentListenerInstaller) {
         this.view = view;
         this.model = model;
         this.undoManager = undoManager;
+        this.fileService = fileService;
         this.documentListenerInstaller = documentListenerInstaller;
     }
 
@@ -90,8 +96,10 @@ public class TE1FileController {
         if (chooser.showOpenDialog(view) == JFileChooser.APPROVE_OPTION) {
             File selectedFile = chooser.getSelectedFile();
 
-            try (BufferedReader br = new BufferedReader(new FileReader(selectedFile))) {
-                view.getTextArea().read(br, null);
+            try {
+                String content = fileService.readFile(selectedFile);
+
+                view.getTextArea().setText(content);
 
                 // read(...) 後は Document が差し替わることがあるため、
                 // 新しい Document にリスナーを再登録する。
@@ -101,6 +109,7 @@ public class TE1FileController {
                 model.setModified(false);
 
                 refreshAfterFileContentChanged();
+
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(view, "ファイルを開けませんでした。");
             }
@@ -118,9 +127,13 @@ public class TE1FileController {
             return;
         }
 
-        try (BufferedWriter bw = new BufferedWriter(new FileWriter(model.getCurrentFile()))) {
-            view.getTextArea().write(bw);
+        try {
+            fileService.writeFile(
+                    model.getCurrentFile(),
+                    view.getTextArea().getText());
+
             model.setModified(false);
+
         } catch (IOException e) {
             JOptionPane.showMessageDialog(view, "保存に失敗しました。");
         }
