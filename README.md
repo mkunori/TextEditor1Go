@@ -19,6 +19,8 @@ Swingを用いて開発したシンプルなテキストエディタです。
 - 段階的リファクタリング
 - パッケージ単位で責務を分割し、構造を明確にする
 - MVCに加えて、Controller分割とService層の導入により責務の明確化を行う
+- Model通知の粒度分割とUI更新ハブにより、変更内容に応じた画面更新を実現
+- UI更新をControllerに集約し、表示ロジックの一元管理を行う
 
 ---
 
@@ -81,9 +83,15 @@ Swingを用いて開発したシンプルなテキストエディタです。
 ### ● Observerパターンの導入
 - Modelの状態変更をControllerが通知で受け取る構造を導入
 - ViewはModelを直接参照せず、Controller経由で更新する構成とした
+- 通知を currentFile / modified ごとに分割し、変更内容に応じたUI更新を実現
+- EditorController を UI更新ハブとして整理
 
 ### ● Swing内部仕様の理解
 - JTextArea.read(...) 実行後の Document 差し替えに伴うリスナー再登録対応
+
+### ● 責務分離と委譲
+- Controllerは処理の流れを担当し、処理本体はServiceへ委譲
+- File / Search など機能ごとにControllerを分割
 
 ---
 
@@ -126,27 +134,25 @@ service
 ```mermaid
 classDiagram
     class TE1Main
-
     class TE1EditorController
     class TE1FileController
     class TE1SearchController
-
     class TE1EditorView
     class TE1EditorModel
-
+    class TE1ModelListener
     class TE1SearchReplaceHandler
     class TE1SearchService
     class TE1SearchReplaceDialog
-
     class TE1UndoSupport
 
     TE1Main --> TE1EditorController
 
     TE1EditorController --> TE1EditorView
-    TE1EditorController --> TE1EditorModel
-    TE1EditorController --> TE1UndoSupport
+    TE1EditorController --> TE1EditorModel : observes
     TE1EditorController --> TE1FileController
     TE1EditorController --> TE1SearchController
+    TE1EditorController --> TE1UndoSupport
+    TE1EditorController --> TE1SearchReplaceHandler : uses
 
     TE1FileController --> TE1EditorView
     TE1FileController --> TE1EditorModel
@@ -155,8 +161,12 @@ classDiagram
     TE1SearchController --> TE1SearchReplaceHandler
     TE1SearchController --> TE1SearchReplaceDialog
 
-    TE1SearchReplaceHandler <|.. TE1SearchService
+    TE1EditorController ..|> TE1ModelListener
+    TE1EditorModel --> TE1ModelListener
+
+    TE1SearchService ..|> TE1SearchReplaceHandler
     TE1SearchService --> TE1UndoSupport
+    TE1SearchReplaceDialog --> TE1SearchReplaceHandler
 ```
 
 ---
@@ -166,7 +176,7 @@ classDiagram
 ### ● 設計
 - Controller の責務整理
 - Model の責務強化
-- Model通知の粒度の細分化（変更内容ごとの通知）
+- Model通知のさらなる活用（通知ごとのUI更新の最適化）
 - クラス分割の最適化
 
 ### ● 機能
