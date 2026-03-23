@@ -11,19 +11,23 @@ import service.TE1SearchReplaceHandler;
 import service.TE1SearchService;
 import service.TE1UndoSupport;
 import view.TE1EditorView;
-import view.TE1SearchReplaceDialog;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
+import java.io.File;
 
 /**
  * TextEditor1Go 全体の制御を担当する Controller クラス。
  *
- * このクラスは以下の役割を持つ。
+ * このクラスはアプリケーションの司令塔として、
+ * View、Model、各機能別 Controller / Service を接続し、
+ * 画面全体の動作を調整する。
+ *
+ * 主な役割は以下の通り。
  * - View、Model、各種 Controller / Service の生成と接続
- * - Document やキャレットに関する共通イベント登録
- * - Undo / Redo
- * - Model の変更通知を受けて View を更新する
+ * - Document や Caret に関する共通イベントの登録
+ * - Undo / Redo の制御
+ * - Model の変更通知を受け取り、必要な View 更新へつなぐ
  *
  * ファイル操作は TE1FileController、
  * 検索・置換まわりの操作は TE1SearchController が担当する。
@@ -33,7 +37,7 @@ public class TE1EditorController implements TE1ModelListener {
     /** 画面表示を担当する View */
     private final TE1EditorView view;
 
-    /** エディタの状態を保持する Model */
+    /** アプリケーション状態を保持する Model */
     private final TE1EditorModel model;
 
     /** ファイル操作を担当する Controller */
@@ -45,7 +49,7 @@ public class TE1EditorController implements TE1ModelListener {
     /** Undo / Redo の本体 */
     private final UndoManager undoManager;
 
-    /** Undo 用の補助クラス */
+    /** Undo 編集を補助するクラス */
     private final TE1UndoSupport undoSupport;
 
     /** 検索・置換処理の橋渡し */
@@ -223,7 +227,9 @@ public class TE1EditorController implements TE1ModelListener {
     }
 
     /**
-     * 現在のファイル名と未保存状態をタイトルへ反映する。
+     * Model の状態をもとにウィンドウタイトルを更新する。
+     *
+     * 現在のファイル名と未保存変更の有無を View へ反映する。
      */
     private void updateTitle() {
         String fileName = (model.getCurrentFile() == null)
@@ -266,10 +272,54 @@ public class TE1EditorController implements TE1ModelListener {
         });
     }
 
+    /**
+     * 現在開いているファイルが変更されたときの通知を受け取る。
+     *
+     * @param currentFile 変更後のファイル。新規状態の場合は null
+     */
     @Override
-    public void modelChanged(TE1EditorModel model) {
-        // Model の状態変更通知を受けたら、
-        // 現在のファイル名と未保存状態をタイトルへ反映する。
+    public void currentFileChanged(File currentFile) {
+        handleCurrentFileChanged();
+    }
+
+    /**
+     * 未保存変更状態が変更されたときの通知を受け取る。
+     *
+     * @param modified 未保存変更がある場合は true
+     */
+    @Override
+    public void modifiedChanged(boolean modified) {
+        handleModifiedChanged();
+    }
+
+    /**
+     * 現在ファイル変更時に必要な画面更新を行う。
+     *
+     * 現時点ではタイトル更新を行う。
+     * 今後、ファイル変更に応じた表示更新はこのメソッドへ集約する。
+     */
+    private void handleCurrentFileChanged() {
         updateTitle();
+    }
+
+    /**
+     * 未保存変更状態の変更時に必要な画面更新を行う。
+     *
+     * 現時点ではタイトル更新を行う。
+     * 今後、保存系UIの更新などはこのメソッドへ集約する。
+     */
+    private void handleModifiedChanged() {
+        updateTitle();
+        updateSaveActions();
+    }
+
+    /**
+     * 保存系UIの表示状態を更新する。
+     *
+     * 現時点では未実装。
+     * 将来、保存メニューや保存ボタンの有効 / 無効切り替えをここへ集約する。
+     */
+    private void updateSaveActions() {
+        // 今後、保存メニューや保存ボタンの有効 / 無効切り替えを実装する。
     }
 }

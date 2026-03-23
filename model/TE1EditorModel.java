@@ -39,7 +39,7 @@ public class TE1EditorModel {
      */
     public void setCurrentFile(File currentFile) {
         this.currentFile = currentFile;
-        notifyListeners();
+        notifyCurrentFileChanged();
     }
 
     /**
@@ -58,7 +58,7 @@ public class TE1EditorModel {
      */
     public void setModified(boolean modified) {
         this.modified = modified;
-        notifyListeners();
+        notifyModifiedChanged();
     }
 
     /**
@@ -71,11 +71,20 @@ public class TE1EditorModel {
     }
 
     /**
-     * 登録済みリスナーへ状態変更を通知する。
+     * 登録済みリスナーへ現在開いているファイルの変更を通知する。
      */
-    private void notifyListeners() {
+    private void notifyCurrentFileChanged() {
         for (TE1ModelListener listener : listeners) {
-            listener.modelChanged(this);
+            listener.currentFileChanged(currentFile);
+        }
+    }
+
+    /**
+     * 登録済みリスナーへ未保存状態の変更を通知する。
+     */
+    private void notifyModifiedChanged() {
+        for (TE1ModelListener listener : listeners) {
+            listener.modifiedChanged(modified);
         }
     }
 

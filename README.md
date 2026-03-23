@@ -18,6 +18,7 @@ Swingを用いて開発したシンプルなテキストエディタです。
 - 設計（責務分離・MVC）
 - 段階的リファクタリング
 - パッケージ単位で責務を分割し、構造を明確にする
+- MVCに加えて、Controller分割とService層の導入により責務の明確化を行う
 
 ---
 
@@ -77,18 +78,28 @@ Swingを用いて開発したシンプルなテキストエディタです。
 - invokeLater によるフォーカス問題の対策
 - ショートカットキーの競合回避
 
+### ● Observerパターンの導入
+- Modelの状態変更をControllerが通知で受け取る構造を導入
+- ViewはModelを直接参照せず、Controller経由で更新する構成とした
+
+### ● Swing内部仕様の理解
+- JTextArea.read(...) 実行後の Document 差し替えに伴うリスナー再登録対応
+
 ---
 
-## ■ パッケージ構成（現状）
+## ■ パッケージ構成
 
 main  
 └ TE1Main  
 　└ アプリケーション起動
 
 controller  
-└ TE1EditorController  
-　└ View と Model の橋渡し  
-　└ メニュー操作、ファイル操作、Undo / Redo、検索ダイアログ制御
+├ TE1EditorController  
+│　└ 全体の制御、各Controllerの接続、Model通知の受信  
+├ TE1FileController  
+│　└ ファイル操作（新規作成、読み込み、保存、終了確認）  
+└ TE1SearchController  
+　└ 検索・置換UIの制御
 
 view  
 ├ TE1EditorView  
@@ -114,104 +125,38 @@ service
 
 ```mermaid
 classDiagram
-    class TE1Main {
-        +main(String[] args)
-    }
+    class TE1Main
 
-    class TE1EditorController {
-        -view : TE1EditorView
-        -model : TE1EditorModel
-        -undoManager : UndoManager
-        -undoSupport : TE1UndoSupport
-        -searchReplaceDialog : TE1SearchReplaceDialog
-        -searchService : TE1SearchReplaceHandler
-        +show()
-        +newFile()
-        +openFile()
-        +saveFile()
-        +saveAsFile()
-        +undo()
-        +redo()
-        +findText()
-        +findNextText()
-        +showSearchReplaceDialog()
-        +confirmClose()
-    }
+    class TE1EditorController
+    class TE1FileController
+    class TE1SearchController
 
-    class TE1EditorView {
-        +updateLineNumbers()
-        +updateStatusBar()
-        +setWindowTitle(String)
-        +getTextArea()
-        +getNewItem()
-        +getOpenItem()
-        +getSaveItem()
-        +getSaveAsItem()
-        +getUndoItem()
-        +getRedoItem()
-        +getFindItem()
-        +getFindNextItem()
-        +getReplaceItem()
-        +getReplaceAllItem()
-    }
+    class TE1EditorView
+    class TE1EditorModel
 
-    class TE1EditorModel {
-        -currentFile : File
-        -modified : boolean
-        +getCurrentFile()
-        +setCurrentFile(File)
-        +isModified()
-        +setModified(boolean)
-    }
+    class TE1SearchReplaceHandler
+    class TE1SearchService
+    class TE1SearchReplaceDialog
 
-    class TE1SearchReplaceDialog {
-        -searchField : JTextField
-        -replaceField : JTextField
-        -searchHandler : TE1SearchReplaceHandler
-        +setSearchText(String)
-    }
+    class TE1UndoSupport
 
-    class TE1SearchReplaceHandler {
-        <<interface>>
-        +findText(String)
-        +findNextText()
-        +replaceText(String, String)
-        +replaceAllText(String, String)
-        +getLastSearchText()
-    }
+    TE1Main --> TE1EditorController
 
-    class TE1SearchService {
-        -textArea : JTextArea
-        -parent : Component
-        -lastSearchText : String
-        -undoSupport : TE1UndoSupport
-        +getLastSearchText()
-        +findText(String)
-        +findNextText()
-        +replaceText(String, String)
-        +replaceAllText(String, String)
-    }
+    TE1EditorController --> TE1EditorView
+    TE1EditorController --> TE1EditorModel
+    TE1EditorController --> TE1UndoSupport
+    TE1EditorController --> TE1FileController
+    TE1EditorController --> TE1SearchController
 
-    class TE1UndoSupport {
-        -undoManager : UndoManager
-        -compoundEdit : CompoundEdit
-        +undoableEditHappened(UndoableEditEvent)
-        +beginCompoundEdit()
-        +endCompoundEdit()
-    }
+    TE1FileController --> TE1EditorView
+    TE1FileController --> TE1EditorModel
 
-    TE1Main --> TE1EditorController : creates
-
-    TE1EditorController --> TE1EditorView : uses
-    TE1EditorController --> TE1EditorModel : uses
-    TE1EditorController --> TE1UndoSupport : uses
-    TE1EditorController --> TE1SearchReplaceDialog : opens
-    TE1EditorController --> TE1SearchReplaceHandler : delegates
-
-    TE1SearchReplaceDialog --> TE1SearchReplaceHandler : delegates
-    TE1SearchService --> TE1UndoSupport : uses
+    TE1SearchController --> TE1EditorView
+    TE1SearchController --> TE1SearchReplaceHandler
+    TE1SearchController --> TE1SearchReplaceDialog
 
     TE1SearchReplaceHandler <|.. TE1SearchService
+    TE1SearchService --> TE1UndoSupport
 ```
 
 ---
@@ -221,7 +166,7 @@ classDiagram
 ### ● 設計
 - Controller の責務整理
 - Model の責務強化
-- Model から View への通知（Observerパターンの導入）
+- Model通知の粒度の細分化（変更内容ごとの通知）
 - クラス分割の最適化
 
 ### ● 機能

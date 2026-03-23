@@ -1,14 +1,23 @@
 package model;
 
+import java.io.File;
+
 /**
  * TE1EditorModel の状態変更通知を受け取るリスナー
  */
 public interface TE1ModelListener {
 
     /**
-     * Model の状態が変更されたときに呼ばれる。
-     * 
-     * @param model 変更後のモデル
+     * 現在開いているファイルが変更されたときに呼ばれる。
+     *
+     * @param currentFile 変更後のファイル。新規状態の場合は null
      */
-    void modelChanged(TE1EditorModel model);
+    void currentFileChanged(File currentFile);
+
+    /**
+     * 未保存変更状態が変更されたときに呼ばれる。
+     *
+     * @param modified 未保存変更がある場合は true
+     */
+    void modifiedChanged(boolean modified);
 }

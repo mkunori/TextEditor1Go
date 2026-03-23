@@ -15,15 +15,17 @@ import model.TE1EditorModel;
 import view.TE1EditorView;
 
 /**
- * TextEditor1Go 全体の制御を担当する Controller クラス。
+ * TextEditor1Go のファイル操作を担当する Controller クラス。
  *
  * このクラスは以下の役割を持つ。
- * - View、Model、各種サブ Controller / Service の生成と接続
- * - Model の変更通知を受けて View を更新する
- * - Undo / Redo
- * - 検索 / 置換機能との連携
+ * - 新規作成
+ * - ファイルの読み込み
+ * - 上書き保存
+ * - 名前を付けて保存
+ * - 終了時の保存確認
  *
- * ファイル操作そのものは TE1FileController が担当する。
+ * 状態更新は Model へ反映し、
+ * タイトル更新などの表示変更は Observer を通じて別途反映される。
  */
 public class TE1FileController {
 
@@ -50,7 +52,10 @@ public class TE1FileController {
     /**
      * ファイル操作用 Controller を初期化する。
      *
-     * View、Model、Undo、Document リスナーを登録する。
+     * @param view                      メイン画面
+     * @param model                     エディタの状態を保持する Model
+     * @param undoManager               Undo / Redo の履歴本体
+     * @param documentListenerInstaller Document リスナー再登録用コールバック
      */
     public TE1FileController(
             TE1EditorView view,
@@ -73,9 +78,7 @@ public class TE1FileController {
         model.setCurrentFile(null);
         model.setModified(false);
 
-        undoManager.discardAllEdits();
-        view.updateLineNumbers();
-        view.updateStatusBar();
+        refreshAfterFileContentChanged();
     }
 
     /**
@@ -92,17 +95,12 @@ public class TE1FileController {
 
                 // read(...) 後は Document が差し替わることがあるため、
                 // 新しい Document にリスナーを再登録する。
-                documentListenerInstaller.run();
+                reinstallDocumentListeners();
 
                 model.setCurrentFile(selectedFile);
                 model.setModified(false);
 
-                // 読み込み直後を「編集前の基準状態」にするため、
-                // それ以前の Undo 履歴は破棄する。
-                undoManager.discardAllEdits();
-
-                view.updateLineNumbers();
-                view.updateStatusBar();
+                refreshAfterFileContentChanged();
             } catch (IOException e) {
                 JOptionPane.showMessageDialog(view, "ファイルを開けませんでした。");
             }
@@ -170,4 +168,25 @@ public class TE1FileController {
         }
     }
 
+    /**
+     * ファイル内容の切り替え後に必要な共通後処理を行う。
+     * 
+     * 読み込み直後や新規作成直後の状態を基準にするため、
+     * Undo 履歴を破棄し、画面表示を更新する。
+     */
+    private void refreshAfterFileContentChanged() {
+        undoManager.discardAllEdits();
+        view.updateLineNumbers();
+        view.updateStatusBar();
+    }
+
+    /**
+     * 現在の Document に対して必要なリスナーを再登録する。
+     *
+     * JTextArea.read(...) 実行後は内部の Document が差し替わることがあるため、
+     * 読み込み後にこのメソッドを呼び出して再登録する。
+     */
+    private void reinstallDocumentListeners() {
+        documentListenerInstaller.run();
+    }
 }

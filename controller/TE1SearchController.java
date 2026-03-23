@@ -42,17 +42,27 @@ public class TE1SearchController {
 
     /**
      * 検索文字列を入力して検索する。
-     * 
+     *
      * 入力がキャンセルされた場合や空文字の場合は何もしない。
      */
     public void findText() {
         String keyword = JOptionPane.showInputDialog(view, "検索する文字列を入力してください。");
 
-        if (keyword == null || keyword.isEmpty()) {
+        if (!isValidKeyword(keyword)) {
             return;
         }
 
         searchHandler.findText(keyword);
+    }
+
+    /**
+     * 検索文字列として有効かどうかを判定する。
+     *
+     * @param keyword 入力された検索文字列
+     * @return キャンセルでなく、かつ空文字でない場合は true
+     */
+    private boolean isValidKeyword(String keyword) {
+        return keyword != null && !keyword.isEmpty();
     }
 
     /**
@@ -64,11 +74,19 @@ public class TE1SearchController {
 
     /**
      * 検索・置換ダイアログを表示する。
-     *
-     * ダイアログは最初の1回だけ生成し、その後は再利用する。
-     * 毎回 new しないことで、前回入力した検索語を保持しやすくなる。
      */
     public void showSearchReplaceDialog() {
+        prepareSearchReplaceDialog();
+        searchReplaceDialog.setVisible(true);
+    }
+
+    /**
+     * 検索・置換ダイアログを表示前の状態に整える。
+     *
+     * 必要ならダイアログを生成し、
+     * 前回検索した文字列があれば検索欄へ反映する。
+     */
+    private void prepareSearchReplaceDialog() {
         if (searchReplaceDialog == null) {
             searchReplaceDialog = new TE1SearchReplaceDialog(view, searchHandler);
         }
@@ -77,7 +95,5 @@ public class TE1SearchController {
         if (lastSearchText != null) {
             searchReplaceDialog.setSearchText(lastSearchText);
         }
-
-        searchReplaceDialog.setVisible(true);
     }
 }
