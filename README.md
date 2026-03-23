@@ -1,11 +1,11 @@
 # TextEditor1Go
 
 Swingを用いて開発したシンプルなテキストエディタです。  
-基本的な編集機能に加え、検索・置換やUndo/Redoを備え、  
-設計改善（MVC・責務分離）を目的として段階的にリファクタリングを行っています。
+基本的な編集機能に加え、検索・置換やUndo/Redoを備えています。  
 
-機能追加とリファクタリングを繰り返しながら、  
-設計改善（MVC志向）を学習することを目的としています。  
+本アプリでは、MVC志向の設計をベースに、  
+Controller分割・Service層導入・イベント分離などを段階的に適用し、  
+責務分離と設計改善を実践しています。
 
 また、ChatGPTを活用してレビューや設計相談を行いながら開発を進めています。
 
@@ -14,7 +14,7 @@ Swingを用いて開発したシンプルなテキストエディタです。
 ## ■ 概要
 
 本アプリは、Java学習の一環として開発したデスクトップアプリケーションです。  
-単なる機能実装だけでなく、以下を意識して開発しました。
+以下のポイントで開発しました。
 
 - 設計（責務分離・MVC）
 - 段階的リファクタリング
@@ -74,15 +74,18 @@ Swingを用いて開発したシンプルなテキストエディタです。
 - DocumentListenerによる変更検知
 - Caret監視とステータスバー連動
 - フォーカス制御・ショートカット競合対策
+- EventHandlerによるイベント検知と処理の分離
 
 ### ● 機能実装
 - UndoManagerとCompoundEdit
 - indexOfベースの検索
 - Document直接操作による置換
+- UndoControllerによるUndo実行責務の分離
 
 ### ● その他
 - Swing内部仕様の理解（Document差し替え）
 - FileServiceによるI/O分離
+- Modelに状態変更ロジック（markAsModifiedなど）を集約
 
 ---
 
@@ -139,6 +142,7 @@ classDiagram
     class TE1SearchService
     class TE1SearchReplaceDialog
     class TE1UndoSupport
+    class TE1UndoController
 
     TE1Main --> TE1EditorController
 
@@ -149,6 +153,7 @@ classDiagram
     TE1EditorController --> TE1SearchController : delegates
     TE1EditorController --> TE1UndoSupport : uses
     TE1EditorController --> TE1SearchReplaceHandler : uses
+    TE1EditorController --> TE1UndoController : delegates
 
     TE1EditorEventHandler --> TE1EditorView : monitors
     TE1EditorEventHandler --> TE1EditorController : callbacks
@@ -167,17 +172,25 @@ classDiagram
     TE1SearchService ..|> TE1SearchReplaceHandler
     TE1SearchService --> TE1UndoSupport : uses
     TE1SearchReplaceDialog --> TE1SearchReplaceHandler : delegates
+    
+    TE1UndoController --> TE1UndoSupport : uses
 ```
 
 ---
 
 ## ■ 今後の改善予定
 
-### ● 設計
-### ● 設計
-- 編集イベント（Document / Caret）の責務分離検討
+- Controller の責務整理のさらなる改善
 - Service層の整理と拡張（File / Search以外への適用）
+- Modelの責務強化（状態管理ロジックの集約）
 
 ### ● 機能
 - 正規表現検索
 - 大文字小文字無視検索
+
+## ■ 学び
+- MVCに加え、Controller分割とService層による責務分離
+- Modelに状態変更ロジックを持たせる設計
+- SwingのDocument挙動（差し替え / 使い回し）の違いによる設計影響
+- イベント処理とビジネスロジックの分離（EventHandler導入）
+- Undo機構の設計（CompoundEditによる一括操作）
