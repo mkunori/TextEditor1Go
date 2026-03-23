@@ -135,6 +135,26 @@ service
 
 ---
 
+## ■ パッケージ図（Mermaid）
+
+```mermaid
+flowchart LR
+    main[main<br>起動]
+    controller[controller<br>司令塔 / 各操作制御]
+    view[view<br>画面表示]
+    model[model<br>状態管理 / 通知]
+    service[service<br>処理本体]
+
+    main --> controller
+    controller --> view
+    controller --> model
+    controller --> service
+    view --> service
+    model --> controller
+```
+
+---
+
 ## ■ クラス図（Mermaid）
 
 ```mermaid
@@ -184,6 +204,32 @@ classDiagram
     TE1SearchReplaceDialog --> TE1SearchReplaceHandler : delegates
     
     TE1UndoController --> TE1UndoSupport : uses
+```
+
+---
+
+## ■ シーケンス図（Mermaid）（ファイル読み込み）
+
+```mermaid
+sequenceDiagram
+    participant User
+    participant View
+    participant EditorController
+    participant FileController
+    participant FileService
+    participant Model
+
+    User->>View: 「開く」を実行
+    View->>EditorController: ActionEvent
+    EditorController->>FileController: openFile()
+    FileController->>View: JFileChooser 表示
+    View-->>FileController: ファイル選択
+    FileController->>FileService: readFile(file)
+    FileService-->>FileController: content
+    FileController->>View: setText(content)
+    FileController->>Model: setCurrentFile(file)
+    Model-->>EditorController: 通知
+    EditorController->>View: タイトル / UI更新
 ```
 
 ---
