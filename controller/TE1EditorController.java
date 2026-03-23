@@ -25,7 +25,7 @@ import java.io.File;
  *
  * 主な役割は以下の通り。
  * - View、Model、各種 Controller / Service の生成と接続
- * - Document や Caret に関する共通イベントの登録
+ * - Document や Caret に関する共通編集イベントの管理
  * - Undo / Redo の制御
  * - Model の変更通知を受け取り、必要な View 更新へつなぐ
  *
@@ -80,14 +80,14 @@ public class TE1EditorController implements TE1ModelListener {
                 this::installListenersToCurrentDocument);
 
         registerWindowListener();
-        registerDocumentListeners();
-        registerCaretListener();
+        registerEditorEventListeners();
         registerMenuActions();
         registerUndoRedoKeyBindings();
 
         view.updateLineNumbers();
         view.updateStatusBar();
         updateTitle();
+        updateSaveActions();
     }
 
     /**
@@ -300,13 +300,14 @@ public class TE1EditorController implements TE1ModelListener {
      */
     private void handleCurrentFileChanged() {
         updateTitle();
+        updateSaveActions();
     }
 
     /**
      * 未保存変更状態の変更時に必要な画面更新を行う。
      *
      * 現時点ではタイトル更新を行う。
-     * 今後、保存系UIの更新などはこのメソッドへ集約する。
+     * 今後、未保存変更状態に応じた表示更新はこのメソッドへ集約する。
      */
     private void handleModifiedChanged() {
         updateTitle();
@@ -316,10 +317,25 @@ public class TE1EditorController implements TE1ModelListener {
     /**
      * 保存系UIの表示状態を更新する。
      *
-     * 現時点では未実装。
-     * 将来、保存メニューや保存ボタンの有効 / 無効切り替えをここへ集約する。
+     * 現在は保存メニューの有効 / 無効を切り替える。
+     * 未保存変更がある場合のみ「保存」を有効にする。
+     *
+     * 「名前を付けて保存」は常に実行できるため、有効のままとする。
      */
     private void updateSaveActions() {
-        // 今後、保存メニューや保存ボタンの有効 / 無効切り替えを実装する。
+        view.getSaveItem().setEnabled(model.isModified());
+        view.getSaveAsItem().setEnabled(true);
+    }
+
+    /**
+     * エディタ全体に関わる共通イベントリスナーを登録する。
+     *
+     * 現在は以下を対象とする。
+     * - Document の変更監視
+     * - Caret の移動監視
+     */
+    private void registerEditorEventListeners() {
+        registerDocumentListeners();
+        registerCaretListener();
     }
 }
