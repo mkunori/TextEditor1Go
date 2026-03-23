@@ -1,12 +1,11 @@
 package controller;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import javax.swing.undo.UndoManager;
 
 import model.TE1EditorModel;
 import model.TE1ModelListener;
+import service.TE1FileService;
 import service.TE1SearchReplaceHandler;
 import service.TE1SearchService;
 import service.TE1UndoSupport;
@@ -55,6 +54,12 @@ public class TE1EditorController implements TE1ModelListener {
     /** 検索・置換処理の橋渡し */
     private final TE1SearchReplaceHandler searchService;
 
+    /** ファイル読み書きの本体 */
+    private final TE1FileService fileService;
+
+    /** Document / Caret の共通イベントを管理するクラス */
+    private final TE1EditorEventHandler eventHandler;
+
     /**
      * Controller を初期化する。
      *
@@ -73,11 +78,19 @@ public class TE1EditorController implements TE1ModelListener {
         searchService = new TE1SearchService(view.getTextArea(), view, undoSupport);
         searchController = new TE1SearchController(view, searchService);
 
+        fileService = new TE1FileService();
+
+        eventHandler = new TE1EditorEventHandler(
+                view.getTextArea(),
+                this::handleDocumentChanged,
+                view::updateStatusBar);
+
         fileController = new TE1FileController(
                 view,
                 model,
                 undoManager,
-                this::installListenersToCurrentDocument);
+                fileService,
+                this::reinstallDocumentListener);
 
         registerWindowListener();
         registerEditorEventListeners();
@@ -113,67 +126,15 @@ public class TE1EditorController implements TE1ModelListener {
     }
 
     /**
-     * 現在の Document に対して変更監視リスナーを登録する。
-     *
-     * JTextArea.read(...) 実行後は内部の Document が差し替わることがあるため、
-     * 読み込み後は新しい Document に対して再登録する必要がある。
-     *
-     * 現時点では DocumentListener の再登録のみを行う。
-     */
-    private void registerDocumentListeners() {
-        installListenersToCurrentDocument();
-    }
-
-    /**
-     * 現在の Document に対して変更監視用リスナーを登録する。
-     * 
-     * テキスト変更時に以下を行う：
-     * - modified フラグ更新
-     * - 行番号更新
-     * - ステータスバー更新
-     * 
-     * JTextArea.read(...) 実行後は Document が差し替わるため、
-     * このメソッドで再登録する必要がある。
-     */
-    private void installListenersToCurrentDocument() {
-        view.getTextArea().getDocument().addDocumentListener(new DocumentListener() {
-            @Override
-            public void insertUpdate(DocumentEvent e) {
-                handleDocumentChanged();
-            }
-
-            @Override
-            public void removeUpdate(DocumentEvent e) {
-                handleDocumentChanged();
-            }
-
-            @Override
-            public void changedUpdate(DocumentEvent e) {
-                handleDocumentChanged();
-            }
-        });
-    }
-
-    /**
      * Document 更新時の共通処理を行う。
      *
-     * DocumentListener の3メソッドに同じ処理を書かないため、
-     * 共通化している。
+     * Document の変更が発生したら、
+     * modified フラグ、行番号、ステータスバーを更新する。
      */
     private void handleDocumentChanged() {
         model.setModified(true);
         view.updateLineNumbers();
         view.updateStatusBar();
-    }
-
-    /**
-     * キャレット移動時のリスナーを登録する。
-     *
-     * キャレットとは、現在の入力位置を表すカーソルのこと。
-     * 位置が変わるたびにステータスバーを更新する。
-     */
-    private void registerCaretListener() {
-        view.getTextArea().addCaretListener(e -> view.updateStatusBar());
     }
 
     /**
@@ -335,7 +296,17 @@ public class TE1EditorController implements TE1ModelListener {
      * - Caret の移動監視
      */
     private void registerEditorEventListeners() {
-        registerDocumentListeners();
-        registerCaretListener();
+        eventHandler.installDocumentListener();
+        eventHandler.installCaretListener();
+    }
+
+    /**
+     * 現在の Document に対して変更監視リスナーを再登録する。
+     *
+     * JTextArea.read(...) 実行後は内部の Document が差し替わることがあるため、
+     * FileController からこのメソッドを呼び出して再登録する。
+     */
+    private void reinstallDocumentListener() {
+        eventHandler.installDocumentListener();
     }
 }
