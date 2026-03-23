@@ -11,6 +11,7 @@ import javax.swing.event.DocumentListener;
  * - Document の変更監視
  * - Caret の移動監視
  *
+ * EventHandler は「イベントを検知する」だけを担当する。
  * 実際の処理は外部から渡されたコールバックへ委譲する。
  */
 public class TE1EditorEventHandler {
@@ -46,8 +47,14 @@ public class TE1EditorEventHandler {
      *
      * JTextArea.read(...) により Document が差し替わるため、
      * 必要に応じて再登録する。
+     * 
+     * insert / remove / changed のどれでも最終的な処理は同じなので、
+     * すべて同じコールバックを呼ぶ。
      */
     public void installDocumentListener() {
+        // Document の変更を検知する。
+        // insert / remove / changed の違いはここでは区別せず、
+        // すべて同じ処理へ委譲する。
         textArea.getDocument().addDocumentListener(new DocumentListener() {
             @Override
             public void insertUpdate(DocumentEvent e) {
@@ -70,6 +77,7 @@ public class TE1EditorEventHandler {
      * Caretリスナーを登録する。
      */
     public void installCaretListener() {
+        // キャレット位置が変わるたびに通知する
         textArea.addCaretListener(e -> caretChangedHandler.run());
     }
 }

@@ -1,15 +1,9 @@
 package controller;
 
-import java.io.BufferedReader;
-import java.io.BufferedWriter;
 import java.io.File;
-import java.io.FileReader;
-import java.io.FileWriter;
 import java.io.IOException;
-
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
-import javax.swing.undo.UndoManager;
 
 import model.TE1EditorModel;
 import service.TE1FileService;
@@ -24,6 +18,9 @@ import view.TE1EditorView;
  * - 上書き保存
  * - 名前を付けて保存
  * - 終了時の保存確認
+ * 
+ * 実際のファイル入出力は TE1FileService に委譲し、
+ * このクラスは「処理の流れ」を制御する役割を持つ。
  *
  * 状態更新は Model へ反映し、
  * タイトル更新などの表示変更は Observer を通じて別途反映される。
@@ -59,6 +56,7 @@ public class TE1FileController {
      * @param view                      メイン画面
      * @param model                     エディタの状態を保持する Model
      * @param undoController            Undo / Redo 操作を担当する Controller
+     * @param fileService               ファイル読み書きの本体
      * @param documentListenerInstaller Document リスナー再登録用コールバック
      */
     public TE1FileController(
@@ -80,9 +78,12 @@ public class TE1FileController {
      * テキスト内容、現在ファイル、未保存状態、Undo 履歴を初期化する。
      */
     public void newFile() {
+        // テキスト内容をクリア
         view.getTextArea().setText("");
+
+        // currentFile を null にすることで「無題状態」にする
+        // 同時に Model 側で modified は false に初期化される
         model.setCurrentFile(null);
-        model.markAsSaved();
 
         refreshAfterFileContentChanged();
     }
@@ -97,12 +98,17 @@ public class TE1FileController {
             File selectedFile = chooser.getSelectedFile();
 
             try {
+                // ファイル内容を読み込む（I/O本体はServiceへ委譲）
                 String content = fileService.readFile(selectedFile);
 
+                // テキストエリアへ反映
                 view.getTextArea().setText(content);
 
+                // 現在ファイルを更新（ここで modified は false になる）
                 model.setCurrentFile(selectedFile);
-                model.markAsSaved();
+
+                // Undo履歴はファイル単位でリセットする
+                undoController.clear();
 
                 refreshAfterFileContentChanged();
 
@@ -187,15 +193,5 @@ public class TE1FileController {
         undoController.clear();
         view.updateLineNumbers();
         view.updateStatusBar();
-    }
-
-    /**
-     * 現在の Document に対して必要なリスナーを再登録する。
-     *
-     * JTextArea.read(...) 実行後は内部の Document が差し替わることがあるため、
-     * 読み込み後にこのメソッドを呼び出して再登録する。
-     */
-    private void reinstallDocumentListeners() {
-        documentListenerInstaller.run();
     }
 }

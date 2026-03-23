@@ -21,6 +21,9 @@ import java.io.File;
  * このクラスはアプリケーションの司令塔として、
  * View、Model、各機能別 Controller / Service を接続し、
  * 画面全体の動作を調整する。
+ * 
+ * また、Model からの通知を受け取り、
+ * 「どの状態が変わったか」に応じて適切な UI 更新へつなぐ役割を持つ。
  *
  * 主な役割は以下の通り。
  * - View、Model、各種 Controller / Service の生成と接続
@@ -137,7 +140,10 @@ public class TE1EditorController implements TE1ModelListener {
      * modified フラグ、行番号、ステータスバーを更新する。
      */
     private void handleDocumentChanged() {
+        // Document が変更された＝内容が変わったので未保存状態にする
         model.markAsModified();
+
+        // 行番号・ステータスバーは内容変更に依存するため更新
         view.updateLineNumbers();
         view.updateStatusBar();
     }
@@ -217,6 +223,7 @@ public class TE1EditorController implements TE1ModelListener {
      */
     @Override
     public void currentFileChanged(File currentFile) {
+        // ファイルが切り替わったときのUI更新
         handleCurrentFileChanged();
     }
 
@@ -227,6 +234,7 @@ public class TE1EditorController implements TE1ModelListener {
      */
     @Override
     public void modifiedChanged(boolean modified) {
+        // 未保存状態が変わったときのUI更新
         handleModifiedChanged();
     }
 
@@ -261,7 +269,10 @@ public class TE1EditorController implements TE1ModelListener {
      * 「名前を付けて保存」は常に実行できるため、有効のままとする。
      */
     private void updateSaveActions() {
+        // 保存メニューは「未保存変更があるときのみ」有効にする
         view.getSaveItem().setEnabled(model.canSave());
+
+        // Save As は常に実行可能
         view.getSaveAsItem().setEnabled(true);
     }
 

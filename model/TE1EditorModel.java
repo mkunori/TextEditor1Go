@@ -38,6 +38,8 @@ public class TE1EditorModel {
      */
     public void setCurrentFile(File currentFile) {
         this.currentFile = currentFile;
+
+        // ファイル切り替え直後は保存済み状態とする
         this.modified = false;
 
         notifyCurrentFileChanged();
@@ -56,9 +58,14 @@ public class TE1EditorModel {
     /**
      * 未保存状態にする。
      *
-     * 既に未保存状態の場合は何もしない。
+     * Controller から modified フラグを直接 true / false にするのではなく、
+     * 「どんな意味の変更か」を表すメソッド名で呼び出せるようにしている。
+     *
+     * これにより、呼び出し側の意図が読み取りやすくなり、
+     * 状態変更時の通知処理も Model 側へまとめられる。
      */
     public void markAsModified() {
+        // すでに未保存状態なら通知しない（無駄なUI更新を防ぐ）
         if (!modified) {
             modified = true;
             notifyModifiedChanged();
@@ -67,6 +74,12 @@ public class TE1EditorModel {
 
     /**
      * 保存済み状態にする。
+     *
+     * Controller から modified フラグを直接 true / false にするのではなく、
+     * 「どんな意味の変更か」を表すメソッド名で呼び出せるようにしている。
+     *
+     * これにより、呼び出し側の意図が読み取りやすくなり、
+     * 状態変更時の通知処理も Model 側へまとめられる。
      */
     public void markAsSaved() {
         if (modified) {
@@ -81,6 +94,7 @@ public class TE1EditorModel {
      * 未保存変更がある場合のみ保存可能とする。
      */
     public boolean canSave() {
+        // 保存は「未保存変更があるときのみ」可能
         return modified;
     }
 
