@@ -93,35 +93,45 @@ Controller分割・Service層導入・イベント分離などを段階的に適
 
 main  
 └ TE1Main  
-　└ アプリケーション起動
+   └ アプリケーションのエントリーポイント  
 
 controller  
 ├ TE1EditorController  
-│　└ 全体の制御、各Controllerの接続、Model通知の受信、共通編集イベント管理  
+│   └ アプリケーション全体の司令塔  
+│      各Controller・Serviceの連携、Model通知の受信、UI更新の制御を担当  
+├ TE1EditorEventHandler  
+│   └ Document / Caret イベントの検知を担当  
+│      実際の処理はControllerへコールバックで委譲  
 ├ TE1FileController  
-│　└ ファイル操作の制御（新規作成、読み込み、保存、終了確認）  
-└ TE1SearchController  
-　└ 検索・置換UIの制御
+│   └ ファイル操作の流れを制御  
+│      （新規作成・読み込み・保存・終了確認）  
+├ TE1SearchController  
+│   └ 検索・置換UIの制御  
+└ TE1UndoController  
+　└ Undo / Redo の実行を担当  
 
 view  
 ├ TE1EditorView  
-│　└ 画面表示（テキストエリア、行番号、ステータスバー、メニュー）  
+│   └ メイン画面（テキストエリア・行番号・ステータスバー・メニュー）  
 └ TE1SearchReplaceDialog  
-　└ 検索・置換ダイアログ UI
+　└ 検索・置換ダイアログ  
 
 model  
 └ TE1EditorModel  
-　└ 状態管理（currentFile, modified）
+　└ アプリケーションの状態管理  
+　　（currentFile / modified）  
+　　状態変更時はリスナーへ通知  
 
 service  
 ├ TE1FileService  
-│　└ ファイル入出力の実装  
+│   └ ファイル入出力の実装（読み込み・書き込み）  
 ├ TE1SearchReplaceHandler  
-│　└ 検索・置換機能のインターフェース  
+│   └ 検索・置換処理のインターフェース  
 ├ TE1SearchService  
-│　└ 検索・置換ロジックの実装  
+│   └ 検索・置換ロジックの実装  
 └ TE1UndoSupport  
-　└ Undo 制御補助
+　└ UndoManagerのラッパー  
+　　編集履歴の管理（CompoundEdit対応）  
 
 ---
 
