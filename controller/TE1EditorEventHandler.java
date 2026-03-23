@@ -3,7 +3,6 @@ package controller;
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
 import javax.swing.event.DocumentListener;
-import javax.swing.event.CaretListener;
 
 /**
  * エディタの共通イベント（Document / Caret）を管理するクラス。

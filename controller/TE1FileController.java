@@ -36,8 +36,8 @@ public class TE1FileController {
     /** エディタの状態を保持する Model */
     private final TE1EditorModel model;
 
-    /** Undo / Redo の本体 */
-    private final UndoManager undoManager;
+    /** Undo / Redo 操作を担当する Controller */
+    private final TE1UndoController undoController;
 
     /** ファイル読み書きの本体 */
     private final TE1FileService fileService;
@@ -58,18 +58,18 @@ public class TE1FileController {
      *
      * @param view                      メイン画面
      * @param model                     エディタの状態を保持する Model
-     * @param undoManager               Undo / Redo の履歴本体
+     * @param undoController            Undo / Redo 操作を担当する Controller
      * @param documentListenerInstaller Document リスナー再登録用コールバック
      */
     public TE1FileController(
             TE1EditorView view,
             TE1EditorModel model,
-            UndoManager undoManager,
+            TE1UndoController undoController,
             TE1FileService fileService,
             Runnable documentListenerInstaller) {
         this.view = view;
         this.model = model;
-        this.undoManager = undoManager;
+        this.undoController = undoController;
         this.fileService = fileService;
         this.documentListenerInstaller = documentListenerInstaller;
     }
@@ -100,10 +100,6 @@ public class TE1FileController {
                 String content = fileService.readFile(selectedFile);
 
                 view.getTextArea().setText(content);
-
-                // read(...) 後は Document が差し替わることがあるため、
-                // 新しい Document にリスナーを再登録する。
-                reinstallDocumentListeners();
 
                 model.setCurrentFile(selectedFile);
                 model.markAsSaved();
@@ -188,7 +184,7 @@ public class TE1FileController {
      * Undo 履歴を破棄し、画面表示を更新する。
      */
     private void refreshAfterFileContentChanged() {
-        undoManager.discardAllEdits();
+        undoController.clear();
         view.updateLineNumbers();
         view.updateStatusBar();
     }

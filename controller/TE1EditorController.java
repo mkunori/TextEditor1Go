@@ -48,6 +48,9 @@ public class TE1EditorController implements TE1ModelListener {
     /** Undo / Redo の本体 */
     private final UndoManager undoManager;
 
+    /** Undo / Redo 操作を担当する Controller */
+    private final TE1UndoController undoController;
+
     /** Undo 編集を補助するクラス */
     private final TE1UndoSupport undoSupport;
 
@@ -74,6 +77,7 @@ public class TE1EditorController implements TE1ModelListener {
 
         undoManager = new UndoManager();
         undoSupport = new TE1UndoSupport(undoManager);
+        undoController = new TE1UndoController(undoManager);
 
         searchService = new TE1SearchService(view.getTextArea(), view, undoSupport);
         searchController = new TE1SearchController(view, searchService);
@@ -88,12 +92,13 @@ public class TE1EditorController implements TE1ModelListener {
         fileController = new TE1FileController(
                 view,
                 model,
-                undoManager,
+                undoController,
                 fileService,
                 this::reinstallDocumentListener);
 
         registerWindowListener();
         registerEditorEventListeners();
+        installUndoListener();
         registerMenuActions();
         registerUndoRedoKeyBindings();
 
@@ -149,42 +154,14 @@ public class TE1EditorController implements TE1ModelListener {
         view.getSaveItem().addActionListener(e -> fileController.saveFile());
         view.getSaveAsItem().addActionListener(e -> fileController.saveAsFile());
 
-        view.getUndoItem().addActionListener(e -> undo());
-        view.getRedoItem().addActionListener(e -> redo());
+        view.getUndoItem().addActionListener(e -> undoController.undo());
+        view.getRedoItem().addActionListener(e -> undoController.redo());
         view.getFindItem().addActionListener(e -> searchController.findText());
         view.getFindNextItem().addActionListener(e -> searchController.findNextText());
 
         // 置換とすべて置換は、どちらも同じ検索置換ダイアログを開く。
         view.getReplaceItem().addActionListener(e -> searchController.showSearchReplaceDialog());
         view.getReplaceAllItem().addActionListener(e -> searchController.showSearchReplaceDialog());
-    }
-
-    /**
-     * 直前の編集操作を取り消す。
-     *
-     * Undo 実行後は表示内容も変化するため、
-     * 行番号とステータスバーもあわせて更新する。
-     */
-    public void undo() {
-        if (undoManager.canUndo()) {
-            undoManager.undo();
-            view.updateLineNumbers();
-            view.updateStatusBar();
-        }
-    }
-
-    /**
-     * 取り消した編集操作をやり直す。
-     *
-     * Redo 実行後は表示内容も変化するため、
-     * 行番号とステータスバーもあわせて更新する。
-     */
-    public void redo() {
-        if (undoManager.canRedo()) {
-            undoManager.redo();
-            view.updateLineNumbers();
-            view.updateStatusBar();
-        }
     }
 
     /**
@@ -221,14 +198,14 @@ public class TE1EditorController implements TE1ModelListener {
         actionMap.put("editorUndo", new AbstractAction() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
-                undo();
+                undoController.undo();
             }
         });
 
         actionMap.put("editorRedo", new AbstractAction() {
             @Override
             public void actionPerformed(java.awt.event.ActionEvent e) {
-                redo();
+                undoController.redo();
             }
         });
     }
@@ -308,5 +285,16 @@ public class TE1EditorController implements TE1ModelListener {
      */
     private void reinstallDocumentListener() {
         eventHandler.installDocumentListener();
+        installUndoListener();
+    }
+
+    /**
+     * 現在の Document に対して Undo 用リスナーを登録する。
+     *
+     * UndoManager に編集履歴を記録するため、
+     * Document が差し替わった場合は再登録が必要になる。
+     */
+    private void installUndoListener() {
+        view.getTextArea().getDocument().addUndoableEditListener(undoSupport);
     }
 }
