@@ -132,7 +132,7 @@ public class TE1EditorController implements TE1ModelListener {
      * modified フラグ、行番号、ステータスバーを更新する。
      */
     private void handleDocumentChanged() {
-        model.setModified(true);
+        model.markAsModified();
         view.updateLineNumbers();
         view.updateStatusBar();
     }
@@ -284,7 +284,7 @@ public class TE1EditorController implements TE1ModelListener {
      * 「名前を付けて保存」は常に実行できるため、有効のままとする。
      */
     private void updateSaveActions() {
-        view.getSaveItem().setEnabled(model.isModified());
+        view.getSaveItem().setEnabled(model.canSave());
         view.getSaveAsItem().setEnabled(true);
     }
 

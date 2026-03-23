@@ -128,6 +128,7 @@ service
 classDiagram
     class TE1Main
     class TE1EditorController
+    class TE1EditorEventHandler
     class TE1FileController
     class TE1SearchController
     class TE1EditorView
@@ -141,12 +142,16 @@ classDiagram
 
     TE1Main --> TE1EditorController
 
-    TE1EditorController --> TE1EditorView
+    TE1EditorController --> TE1EditorView : uses
     TE1EditorController --> TE1EditorModel : observes
+    TE1EditorController --> TE1EditorEventHandler : uses
     TE1EditorController --> TE1FileController : delegates
     TE1EditorController --> TE1SearchController : delegates
     TE1EditorController --> TE1UndoSupport : uses
     TE1EditorController --> TE1SearchReplaceHandler : uses
+
+    TE1EditorEventHandler --> TE1EditorView : monitors
+    TE1EditorEventHandler --> TE1EditorController : callbacks
 
     TE1FileController --> TE1EditorView : uses
     TE1FileController --> TE1EditorModel : updates

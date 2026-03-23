@@ -5,12 +5,10 @@ import java.util.ArrayList;
 import java.util.List;
 
 /**
- * TextEditor1Go の状態を管理するモデルクラス。
+ * エディタの状態を管理する Model クラス。
  *
- * このクラスは画面表示やファイル操作そのものは行わず、
- * 「現在どのファイルを開いているか」
- * 「未保存変更があるか」
- * という状態だけを保持する。
+ * 現在のファイルや未保存状態を保持し、
+ * 状態変更時はリスナーへ通知する。
  */
 public class TE1EditorModel {
 
@@ -33,13 +31,17 @@ public class TE1EditorModel {
     }
 
     /**
-     * 現在開いているファイルを設定する。
+     * 現在のファイルを設定し、未保存状態をリセットする。
      *
-     * @param currentFile 現在開いているファイル。新規状態の場合は null
+     * ファイルを切り替えた直後は保存済み状態になるため、
+     * modified は false に初期化される。
      */
     public void setCurrentFile(File currentFile) {
         this.currentFile = currentFile;
+        this.modified = false;
+
         notifyCurrentFileChanged();
+        notifyModifiedChanged();
     }
 
     /**
@@ -52,13 +54,34 @@ public class TE1EditorModel {
     }
 
     /**
-     * 未保存変更状態を設定する。
+     * 未保存状態にする。
      *
-     * @param modified 未保存変更がある場合は true
+     * 既に未保存状態の場合は何もしない。
      */
-    public void setModified(boolean modified) {
-        this.modified = modified;
-        notifyModifiedChanged();
+    public void markAsModified() {
+        if (!modified) {
+            modified = true;
+            notifyModifiedChanged();
+        }
+    }
+
+    /**
+     * 保存済み状態にする。
+     */
+    public void markAsSaved() {
+        if (modified) {
+            modified = false;
+            notifyModifiedChanged();
+        }
+    }
+
+    /**
+     * 保存可能かどうかを判定する。
+     *
+     * 未保存変更がある場合のみ保存可能とする。
+     */
+    public boolean canSave() {
+        return modified;
     }
 
     /**

@@ -82,7 +82,7 @@ public class TE1FileController {
     public void newFile() {
         view.getTextArea().setText("");
         model.setCurrentFile(null);
-        model.setModified(false);
+        model.markAsSaved();
 
         refreshAfterFileContentChanged();
     }
@@ -106,7 +106,7 @@ public class TE1FileController {
                 reinstallDocumentListeners();
 
                 model.setCurrentFile(selectedFile);
-                model.setModified(false);
+                model.markAsSaved();
 
                 refreshAfterFileContentChanged();
 
@@ -132,7 +132,7 @@ public class TE1FileController {
                     model.getCurrentFile(),
                     view.getTextArea().getText());
 
-            model.setModified(false);
+            model.markAsSaved();
 
         } catch (IOException e) {
             JOptionPane.showMessageDialog(view, "保存に失敗しました。");
