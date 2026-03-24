@@ -2,9 +2,9 @@ package controller;
 
 import javax.swing.JOptionPane;
 
-import service.TE1SearchReplaceHandler;
-import view.TE1EditorView;
-import view.TE1SearchReplaceDialog;
+import service.SearchReplaceHandler;
+import view.EditorView;
+import view.SearchReplaceDialog;
 
 /**
  * TextEditor1Go の検索・置換まわりの制御を担当する Controller クラス。
@@ -13,21 +13,21 @@ import view.TE1SearchReplaceDialog;
  * - 検索文字列入力ダイアログの表示
  * - 次を検索の実行
  * - 検索・置換ダイアログの生成と再利用
- * - 検索・置換処理を TE1SearchReplaceHandler へ委譲
+ * - 検索・置換処理を SearchReplaceHandler へ委譲
  *
  * 実際の検索・置換ロジックそのものは持たず、
- * TE1SearchReplaceHandler の実装へ処理を委譲する。
+ * SearchReplaceHandler の実装へ処理を委譲する。
  */
-public class TE1SearchController {
+public class SearchController {
 
     /** 画面表示を担当する View */
-    private final TE1EditorView view;
+    private final EditorView view;
 
     /** 検索・置換処理の委譲先 */
-    private final TE1SearchReplaceHandler searchHandler;
+    private final SearchReplaceHandler searchHandler;
 
     /** 検索・置換ダイアログ */
-    private TE1SearchReplaceDialog searchReplaceDialog;
+    private SearchReplaceDialog searchReplaceDialog;
 
     /**
      * 検索・置換用 Controller を初期化する。
@@ -35,7 +35,7 @@ public class TE1SearchController {
      * @param view          メイン画面
      * @param searchHandler 検索・置換処理の委譲先
      */
-    public TE1SearchController(TE1EditorView view, TE1SearchReplaceHandler searchHandler) {
+    public SearchController(EditorView view, SearchReplaceHandler searchHandler) {
         this.view = view;
         this.searchHandler = searchHandler;
     }
@@ -88,7 +88,7 @@ public class TE1SearchController {
      */
     private void prepareSearchReplaceDialog() {
         if (searchReplaceDialog == null) {
-            searchReplaceDialog = new TE1SearchReplaceDialog(view, searchHandler);
+            searchReplaceDialog = new SearchReplaceDialog(view, searchHandler);
         }
 
         String lastSearchText = searchHandler.getLastSearchText();

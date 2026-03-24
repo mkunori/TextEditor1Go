@@ -5,9 +5,9 @@ import java.io.IOException;
 import javax.swing.JFileChooser;
 import javax.swing.JOptionPane;
 
-import model.TE1EditorModel;
-import service.TE1FileService;
-import view.TE1EditorView;
+import model.EditorModel;
+import service.FileService;
+import view.EditorView;
 
 /**
  * TextEditor1Go のファイル操作を担当する Controller クラス。
@@ -19,25 +19,25 @@ import view.TE1EditorView;
  * - 名前を付けて保存
  * - 終了時の保存確認
  * 
- * 実際のファイル入出力は TE1FileService に委譲し、
+ * 実際のファイル入出力は FileService に委譲し、
  * このクラスは「処理の流れ」を制御する役割を持つ。
  *
  * 状態更新は Model へ反映し、
  * タイトル更新などの表示変更は Observer を通じて別途反映される。
  */
-public class TE1FileController {
+public class FileController {
 
     /** 画面表示を担当する View */
-    private final TE1EditorView view;
+    private final EditorView view;
 
     /** エディタの状態を保持する Model */
-    private final TE1EditorModel model;
+    private final EditorModel model;
 
     /** Undo / Redo 操作を担当する Controller */
-    private final TE1UndoController undoController;
+    private final UndoController undoController;
 
     /** ファイル読み書きの本体 */
-    private final TE1FileService fileService;
+    private final FileService fileService;
 
     /**
      * Document のリスナーを再登録するためのコールバック。
@@ -59,11 +59,11 @@ public class TE1FileController {
      * @param fileService               ファイル読み書きの本体
      * @param documentListenerInstaller Document リスナー再登録用コールバック
      */
-    public TE1FileController(
-            TE1EditorView view,
-            TE1EditorModel model,
-            TE1UndoController undoController,
-            TE1FileService fileService,
+    public FileController(
+            EditorView view,
+            EditorModel model,
+            UndoController undoController,
+            FileService fileService,
             Runnable documentListenerInstaller) {
         this.view = view;
         this.model = model;

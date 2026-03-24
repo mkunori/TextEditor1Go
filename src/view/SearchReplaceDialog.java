@@ -2,7 +2,7 @@ package view;
 
 import javax.swing.*;
 
-import service.TE1SearchReplaceHandler;
+import service.SearchReplaceHandler;
 
 import java.awt.*;
 
@@ -13,9 +13,9 @@ import java.awt.*;
  * 「次を検索」「置換」「すべて置換」の操作を提供する。
  *
  * 実際の検索・置換処理そのものは持たず、
- * TE1SearchReplaceHandler へ処理を委譲する。
+ * SearchReplaceHandler へ処理を委譲する。
  */
-public class TE1SearchReplaceDialog extends JDialog {
+public class SearchReplaceDialog extends JDialog {
 
     /** 検索文字列入力欄 */
     private final JTextField searchField;
@@ -24,7 +24,7 @@ public class TE1SearchReplaceDialog extends JDialog {
     private final JTextField replaceField;
 
     /** 検索・置換処理の委譲先 */
-    private final TE1SearchReplaceHandler searchHandler;
+    private final SearchReplaceHandler searchHandler;
 
     /**
      * 検索・置換ダイアログを生成する。
@@ -32,7 +32,7 @@ public class TE1SearchReplaceDialog extends JDialog {
      * @param owner         親ウィンドウ
      * @param searchHandler 検索・置換処理の委譲先
      */
-    public TE1SearchReplaceDialog(JFrame owner, TE1SearchReplaceHandler searchHandler) {
+    public SearchReplaceDialog(JFrame owner, SearchReplaceHandler searchHandler) {
         super(owner, "検索 / 置換", false);
         this.searchHandler = searchHandler;
 

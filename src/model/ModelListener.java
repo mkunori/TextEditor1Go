@@ -3,9 +3,9 @@ package model;
 import java.io.File;
 
 /**
- * TE1EditorModel の状態変更通知を受け取るリスナー
+ * EditorModel の状態変更通知を受け取るリスナー
  */
-public interface TE1ModelListener {
+public interface ModelListener {
 
     /**
      * 現在開いているファイルが変更されたときに呼ばれる。

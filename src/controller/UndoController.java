@@ -13,12 +13,12 @@ import javax.swing.undo.UndoManager;
  * EditorController から Undo の実行責務を分離することで、
  * 司令塔である EditorController は全体調整に集中しやすくなる。
  */
-public class TE1UndoController {
+public class UndoController {
 
     /** Undo / Redo の履歴本体 */
     private final UndoManager undoManager;
 
-    public TE1UndoController(UndoManager undoManager) {
+    public UndoController(UndoManager undoManager) {
         this.undoManager = undoManager;
     }
 

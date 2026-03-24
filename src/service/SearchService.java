@@ -11,7 +11,7 @@ import java.awt.*;
  * JTextArea を対象として、
  * 検索、次を検索、1件置換、すべて置換を行う。
  */
-public class TE1SearchService implements TE1SearchReplaceHandler {
+public class SearchService implements SearchReplaceHandler {
 
     /** 検索対象のテキストエリア */
     private final JTextArea textArea;
@@ -23,7 +23,7 @@ public class TE1SearchService implements TE1SearchReplaceHandler {
     private String lastSearchText;
 
     /** まとめ Undo を扱うための補助クラス */
-    private final TE1UndoSupport undoSupport;
+    private final UndoSupport undoSupport;
 
     /**
      * 検索・置換サービスを初期化する。
@@ -32,7 +32,7 @@ public class TE1SearchService implements TE1SearchReplaceHandler {
      * @param parent      メッセージダイアログ表示用の親コンポーネント
      * @param undoSupport Undo 編集補助
      */
-    public TE1SearchService(JTextArea textArea, Component parent, TE1UndoSupport undoSupport) {
+    public SearchService(JTextArea textArea, Component parent, UndoSupport undoSupport) {
         this.textArea = textArea;
         this.parent = parent;
         this.undoSupport = undoSupport;

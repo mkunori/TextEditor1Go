@@ -12,7 +12,7 @@ import java.awt.*;
  * このクラスは「見た目」と「表示更新」を担当し、
  * ファイル保存や検索などの処理本体は持たない。
  */
-public class TE1EditorView extends JFrame {
+public class EditorView extends JFrame {
 
     /** 本文入力用テキストエリア */
     private final JTextArea textArea;
@@ -38,7 +38,7 @@ public class TE1EditorView extends JFrame {
     /**
      * メイン画面を初期化する。
      */
-    public TE1EditorView() {
+    public EditorView() {
         setTitle("テキストエディタ-1号");
         setSize(600, 400);
         setLocationRelativeTo(null);

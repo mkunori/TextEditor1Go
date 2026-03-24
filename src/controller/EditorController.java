@@ -3,13 +3,13 @@ package controller;
 import javax.swing.*;
 import javax.swing.undo.UndoManager;
 
-import model.TE1EditorModel;
-import model.TE1ModelListener;
-import service.TE1FileService;
-import service.TE1SearchReplaceHandler;
-import service.TE1SearchService;
-import service.TE1UndoSupport;
-import view.TE1EditorView;
+import model.EditorModel;
+import model.ModelListener;
+import service.FileService;
+import service.SearchReplaceHandler;
+import service.SearchService;
+import service.UndoSupport;
+import view.EditorView;
 
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
@@ -31,40 +31,40 @@ import java.io.File;
  * - Undo / Redo の制御
  * - Model の変更通知を受け取り、必要な View 更新へつなぐ
  *
- * ファイル操作は TE1FileController、
- * 検索・置換まわりの操作は TE1SearchController が担当する。
+ * ファイル操作は FileController、
+ * 検索・置換まわりの操作は SearchController が担当する。
  */
-public class TE1EditorController implements TE1ModelListener {
+public class EditorController implements ModelListener {
 
     /** 画面表示を担当する View */
-    private final TE1EditorView view;
+    private final EditorView view;
 
     /** アプリケーション状態を保持する Model */
-    private final TE1EditorModel model;
+    private final EditorModel model;
 
     /** ファイル操作を担当する Controller */
-    private final TE1FileController fileController;
+    private final FileController fileController;
 
     /** 検索・置換まわりを担当する Controller */
-    private final TE1SearchController searchController;
+    private final SearchController searchController;
 
     /** Undo / Redo の本体 */
     private final UndoManager undoManager;
 
     /** Undo / Redo 操作を担当する Controller */
-    private final TE1UndoController undoController;
+    private final UndoController undoController;
 
     /** Undo 編集を補助するクラス */
-    private final TE1UndoSupport undoSupport;
+    private final UndoSupport undoSupport;
 
     /** 検索・置換処理の橋渡し */
-    private final TE1SearchReplaceHandler searchService;
+    private final SearchReplaceHandler searchService;
 
     /** ファイル読み書きの本体 */
-    private final TE1FileService fileService;
+    private final FileService fileService;
 
     /** Document / Caret の共通イベントを管理するクラス */
-    private final TE1EditorEventHandler eventHandler;
+    private final EditorEventHandler eventHandler;
 
     /**
      * Controller を初期化する。
@@ -72,27 +72,27 @@ public class TE1EditorController implements TE1ModelListener {
      * View、Model、各種サービスを生成し、
      * イベントリスナーを登録する。
      */
-    public TE1EditorController() {
-        view = new TE1EditorView();
-        model = new TE1EditorModel();
+    public EditorController() {
+        view = new EditorView();
+        model = new EditorModel();
 
         model.addModelListener(this);
 
         undoManager = new UndoManager();
-        undoSupport = new TE1UndoSupport(undoManager);
-        undoController = new TE1UndoController(undoManager);
+        undoSupport = new UndoSupport(undoManager);
+        undoController = new UndoController(undoManager);
 
-        searchService = new TE1SearchService(view.getTextArea(), view, undoSupport);
-        searchController = new TE1SearchController(view, searchService);
+        searchService = new SearchService(view.getTextArea(), view, undoSupport);
+        searchController = new SearchController(view, searchService);
 
-        fileService = new TE1FileService();
+        fileService = new FileService();
 
-        eventHandler = new TE1EditorEventHandler(
+        eventHandler = new EditorEventHandler(
                 view.getTextArea(),
                 this::handleDocumentChanged,
                 view::updateStatusBar);
 
-        fileController = new TE1FileController(
+        fileController = new FileController(
                 view,
                 model,
                 undoController,

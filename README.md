@@ -92,27 +92,27 @@ Controller分割・Service層導入・イベント分離などを段階的に適
 ## ■ パッケージ構成
 
 ```text
-TE1Main                     // アプリケーションのエントリーポイント  
+Main                     // アプリケーションのエントリーポイント  
 
 controller
-├ TE1EditorController       // アプリケーション全体の司令塔（各Controller・Serviceの連携、Model通知の受信、UI更新の制御を担当）
-├ TE1EditorEventHandler     // Document / Caret イベントの検知を担当（実際の処理はControllerへコールバックで委譲）
-├ TE1FileController         // ファイル操作の流れを制御（新規作成・読み込み・保存・終了確認）
-├ TE1SearchController       // 検索・置換UIの制御  
-└ TE1UndoController         // Undo / Redo の実行を担当  
+├ EditorController       // アプリケーション全体の司令塔（各Controller・Serviceの連携、Model通知の受信、UI更新の制御を担当）
+├ EditorEventHandler     // Document / Caret イベントの検知を担当（実際の処理はControllerへコールバックで委譲）
+├ FileController         // ファイル操作の流れを制御（新規作成・読み込み・保存・終了確認）
+├ SearchController       // 検索・置換UIの制御  
+└ UndoController         // Undo / Redo の実行を担当  
 
 view  
-├ TE1EditorView             // メイン画面（テキストエリア・行番号・ステータスバー・メニュー）  
-└ TE1SearchReplaceDialog    // 検索・置換ダイアログ  
+├ EditorView             // メイン画面（テキストエリア・行番号・ステータスバー・メニュー）  
+└ SearchReplaceDialog    // 検索・置換ダイアログ  
 
 model  
-└ TE1EditorModel            // アプリケーションの状態管理（currentFile / modified）状態変更時はリスナーへ通知  
+└ EditorModel            // アプリケーションの状態管理（currentFile / modified）状態変更時はリスナーへ通知  
 
 service  
-├ TE1FileService            // ファイル入出力の実装（読み込み・書き込み）  
-├ TE1SearchReplaceHandler   // 検索・置換処理のインターフェース  
-├ TE1SearchService          // 検索・置換ロジックの実装  
-└ TE1UndoSupport            // UndoManagerのラッパー、編集履歴の管理（CompoundEdit対応）  
+├ FileService            // ファイル入出力の実装（読み込み・書き込み）  
+├ SearchReplaceHandler   // 検索・置換処理のインターフェース  
+├ SearchService          // 検索・置換ロジックの実装  
+└ UndoSupport            // UndoManagerのラッパー、編集履歴の管理（CompoundEdit対応）  
 ```
 
 ---
@@ -141,51 +141,51 @@ flowchart LR
 
 ```mermaid
 classDiagram
-    class TE1Main
-    class TE1EditorController
-    class TE1EditorEventHandler
-    class TE1FileController
-    class TE1SearchController
-    class TE1EditorView
-    class TE1EditorModel
-    class TE1ModelListener
-    class TE1FileService
-    class TE1SearchReplaceHandler
-    class TE1SearchService
-    class TE1SearchReplaceDialog
-    class TE1UndoSupport
-    class TE1UndoController
+    class Main
+    class EditorController
+    class EditorEventHandler
+    class FileController
+    class SearchController
+    class EditorView
+    class EditorModel
+    class ModelListener
+    class FileService
+    class SearchReplaceHandler
+    class SearchService
+    class SearchReplaceDialog
+    class UndoSupport
+    class UndoController
 
-    TE1Main --> TE1EditorController
+    Main --> EditorController
 
-    TE1EditorController --> TE1EditorView : uses
-    TE1EditorController --> TE1EditorModel : observes
-    TE1EditorController --> TE1EditorEventHandler : uses
-    TE1EditorController --> TE1FileController : delegates
-    TE1EditorController --> TE1SearchController : delegates
-    TE1EditorController --> TE1UndoSupport : uses
-    TE1EditorController --> TE1SearchReplaceHandler : uses
-    TE1EditorController --> TE1UndoController : delegates
+    EditorController --> EditorView : uses
+    EditorController --> EditorModel : observes
+    EditorController --> EditorEventHandler : uses
+    EditorController --> FileController : delegates
+    EditorController --> SearchController : delegates
+    EditorController --> UndoSupport : uses
+    EditorController --> SearchReplaceHandler : uses
+    EditorController --> UndoController : delegates
 
-    TE1EditorEventHandler --> TE1EditorView : monitors
-    TE1EditorEventHandler --> TE1EditorController : callbacks
+    EditorEventHandler --> EditorView : monitors
+    EditorEventHandler --> EditorController : callbacks
 
-    TE1FileController --> TE1EditorView : uses
-    TE1FileController --> TE1EditorModel : updates
-    TE1FileController --> TE1FileService : delegates
+    FileController --> EditorView : uses
+    FileController --> EditorModel : updates
+    FileController --> FileService : delegates
 
-    TE1SearchController --> TE1EditorView : uses
-    TE1SearchController --> TE1SearchReplaceHandler : delegates
-    TE1SearchController --> TE1SearchReplaceDialog : manages
+    SearchController --> EditorView : uses
+    SearchController --> SearchReplaceHandler : delegates
+    SearchController --> SearchReplaceDialog : manages
 
-    TE1EditorController ..|> TE1ModelListener
-    TE1EditorModel --> TE1ModelListener : notifies
+    EditorController ..|> ModelListener
+    EditorModel --> ModelListener : notifies
 
-    TE1SearchService ..|> TE1SearchReplaceHandler
-    TE1SearchService --> TE1UndoSupport : uses
-    TE1SearchReplaceDialog --> TE1SearchReplaceHandler : delegates
+    SearchService ..|> SearchReplaceHandler
+    SearchService --> UndoSupport : uses
+    SearchReplaceDialog --> SearchReplaceHandler : delegates
     
-    TE1UndoController --> TE1UndoSupport : uses
+    UndoController --> UndoSupport : uses
 ```
 
 ---

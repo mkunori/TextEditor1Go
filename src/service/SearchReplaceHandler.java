@@ -6,7 +6,7 @@ package service;
  * 検索ダイアログ側はこのインターフェースだけを知っていればよく、
  * 具体的な実装クラスに依存しないようにするために用いる。
  */
-public interface TE1SearchReplaceHandler {
+public interface SearchReplaceHandler {
 
     /**
      * 指定された文字列を本文から検索する。

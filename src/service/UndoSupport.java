@@ -12,7 +12,7 @@ import javax.swing.undo.UndoManager;
  * 「すべて置換」のように複数回の編集を1回の Undo にまとめたい場合は
  * CompoundEdit を利用して一括管理する。
  */
-public class TE1UndoSupport implements UndoableEditListener {
+public class UndoSupport implements UndoableEditListener {
 
     /** Undo / Redo の履歴本体 */
     private final UndoManager undoManager;
@@ -25,7 +25,7 @@ public class TE1UndoSupport implements UndoableEditListener {
      *
      * @param undoManager Undo / Redo の履歴本体
      */
-    public TE1UndoSupport(UndoManager undoManager) {
+    public UndoSupport(UndoManager undoManager) {
         this.undoManager = undoManager;
     }
 

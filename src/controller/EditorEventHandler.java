@@ -14,7 +14,7 @@ import javax.swing.event.DocumentListener;
  * EventHandler は「イベントを検知する」だけを担当する。
  * 実際の処理は外部から渡されたコールバックへ委譲する。
  */
-public class TE1EditorEventHandler {
+public class EditorEventHandler {
 
     /** 監視対象のテキストエリア */
     private final JTextArea textArea;
@@ -32,7 +32,7 @@ public class TE1EditorEventHandler {
      * @param documentChangedHandler Document変更時の処理
      * @param caretChangedHandler    Caret移動時の処理
      */
-    public TE1EditorEventHandler(
+    public EditorEventHandler(
             JTextArea textArea,
             Runnable documentChangedHandler,
             Runnable caretChangedHandler) {

@@ -1,13 +1,13 @@
 import javax.swing.*;
 
-import controller.TE1EditorController;
+import controller.EditorController;
 
 /**
  * TextEditor1Go を起動するクラス。
  *
- * 実際の画面制御やイベント処理は TE1EditorController が担当する。
+ * 実際の画面制御やイベント処理は EditorController が担当する。
  */
-public class TE1Main {
+public class Main {
 
     /**
      * アプリケーションを起動する。
@@ -16,7 +16,7 @@ public class TE1Main {
      */
     public static void main(String[] args) {
         SwingUtilities.invokeLater(() -> {
-            TE1EditorController controller = new TE1EditorController();
+            EditorController controller = new EditorController();
             controller.show();
         });
     }

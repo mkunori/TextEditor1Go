@@ -10,7 +10,7 @@ import java.util.List;
  * 現在のファイルや未保存状態を保持し、
  * 状態変更時はリスナーへ通知する。
  */
-public class TE1EditorModel {
+public class EditorModel {
 
     /** 現在開いているファイル */
     private File currentFile;
@@ -19,7 +19,7 @@ public class TE1EditorModel {
     private boolean modified;
 
     /** 状態変更通知を受け取るリスナー達 */
-    private final List<TE1ModelListener> listeners = new ArrayList<>();
+    private final List<ModelListener> listeners = new ArrayList<>();
 
     /**
      * 現在開いているファイルを取得する。
@@ -103,7 +103,7 @@ public class TE1EditorModel {
      * 
      * @param listener 登録するリスナー
      */
-    public void addModelListener(TE1ModelListener listener) {
+    public void addModelListener(ModelListener listener) {
         listeners.add(listener);
     }
 
@@ -111,7 +111,7 @@ public class TE1EditorModel {
      * 登録済みリスナーへ現在開いているファイルの変更を通知する。
      */
     private void notifyCurrentFileChanged() {
-        for (TE1ModelListener listener : listeners) {
+        for (ModelListener listener : listeners) {
             listener.currentFileChanged(currentFile);
         }
     }
@@ -120,7 +120,7 @@ public class TE1EditorModel {
      * 登録済みリスナーへ未保存状態の変更を通知する。
      */
     private void notifyModifiedChanged() {
-        for (TE1ModelListener listener : listeners) {
+        for (ModelListener listener : listeners) {
             listener.modifiedChanged(modified);
         }
     }

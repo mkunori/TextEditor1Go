@@ -13,7 +13,7 @@ import java.io.IOException;
  * このクラスは純粋なファイルI/Oのみを扱い、
  * UIやControllerの処理は持たない。
  */
-public class TE1FileService {
+public class FileService {
 
     /**
      * 指定したファイルの内容を文字列として読み込む。
