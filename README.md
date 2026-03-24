@@ -91,47 +91,29 @@ Controller分割・Service層導入・イベント分離などを段階的に適
 
 ## ■ パッケージ構成
 
-main  
-└ TE1Main  
-   └ アプリケーションのエントリーポイント  
+```text
+TE1Main                     // アプリケーションのエントリーポイント  
 
-controller  
-├ TE1EditorController  
-│   └ アプリケーション全体の司令塔  
-│      各Controller・Serviceの連携、Model通知の受信、UI更新の制御を担当  
-├ TE1EditorEventHandler  
-│   └ Document / Caret イベントの検知を担当  
-│      実際の処理はControllerへコールバックで委譲  
-├ TE1FileController  
-│   └ ファイル操作の流れを制御  
-│      （新規作成・読み込み・保存・終了確認）  
-├ TE1SearchController  
-│   └ 検索・置換UIの制御  
-└ TE1UndoController  
-　└ Undo / Redo の実行を担当  
+controller
+├ TE1EditorController       // アプリケーション全体の司令塔（各Controller・Serviceの連携、Model通知の受信、UI更新の制御を担当）
+├ TE1EditorEventHandler     // Document / Caret イベントの検知を担当（実際の処理はControllerへコールバックで委譲）
+├ TE1FileController         // ファイル操作の流れを制御（新規作成・読み込み・保存・終了確認）
+├ TE1SearchController       // 検索・置換UIの制御  
+└ TE1UndoController         // Undo / Redo の実行を担当  
 
 view  
-├ TE1EditorView  
-│   └ メイン画面（テキストエリア・行番号・ステータスバー・メニュー）  
-└ TE1SearchReplaceDialog  
-　└ 検索・置換ダイアログ  
+├ TE1EditorView             // メイン画面（テキストエリア・行番号・ステータスバー・メニュー）  
+└ TE1SearchReplaceDialog    // 検索・置換ダイアログ  
 
 model  
-└ TE1EditorModel  
-　└ アプリケーションの状態管理  
-　　（currentFile / modified）  
-　　状態変更時はリスナーへ通知  
+└ TE1EditorModel            // アプリケーションの状態管理（currentFile / modified）状態変更時はリスナーへ通知  
 
 service  
-├ TE1FileService  
-│   └ ファイル入出力の実装（読み込み・書き込み）  
-├ TE1SearchReplaceHandler  
-│   └ 検索・置換処理のインターフェース  
-├ TE1SearchService  
-│   └ 検索・置換ロジックの実装  
-└ TE1UndoSupport  
-　└ UndoManagerのラッパー  
-　　編集履歴の管理（CompoundEdit対応）  
+├ TE1FileService            // ファイル入出力の実装（読み込み・書き込み）  
+├ TE1SearchReplaceHandler   // 検索・置換処理のインターフェース  
+├ TE1SearchService          // 検索・置換ロジックの実装  
+└ TE1UndoSupport            // UndoManagerのラッパー、編集履歴の管理（CompoundEdit対応）  
+```
 
 ---
 
