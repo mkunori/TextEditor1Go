@@ -137,7 +137,15 @@ flowchart LR
 
 ---
 
-## ■ クラス図（Mermaid）
+
+## ■ アーキテクチャ概要
+
+本アプリは、MVC志向をベースにController分割とService層を導入し、
+責務分離を意識した構成としています。
+
+---
+
+### ● 全体構成
 
 ```mermaid
 classDiagram
@@ -146,15 +154,15 @@ classDiagram
     class EditorEventHandler
     class FileController
     class SearchController
+    class UndoController
     class EditorView
     class EditorModel
     class ModelListener
     class FileService
-    class SearchReplaceHandler
+    class SearchHandler
     class SearchService
     class SearchReplaceDialog
     class UndoSupport
-    class UndoController
 
     Main --> EditorController
 
@@ -163,30 +171,103 @@ classDiagram
     EditorController --> EditorEventHandler : uses
     EditorController --> FileController : delegates
     EditorController --> SearchController : delegates
-    EditorController --> UndoSupport : uses
-    EditorController --> SearchReplaceHandler : uses
     EditorController --> UndoController : delegates
-
-    EditorEventHandler --> EditorView : monitors
-    EditorEventHandler --> EditorController : callbacks
-
-    FileController --> EditorView : uses
-    FileController --> EditorModel : updates
-    FileController --> FileService : delegates
-
-    SearchController --> EditorView : uses
-    SearchController --> SearchReplaceHandler : delegates
-    SearchController --> SearchReplaceDialog : manages
 
     EditorController ..|> ModelListener
     EditorModel --> ModelListener : notifies
 
-    SearchService ..|> SearchReplaceHandler
+    FileController --> FileService : delegates
+    SearchController --> SearchHandler : delegates
+    SearchService ..|> SearchHandler
+
     SearchService --> UndoSupport : uses
-    SearchReplaceDialog --> SearchReplaceHandler : delegates
-    
     UndoController --> UndoSupport : uses
 ```
+
+---
+
+### ● ファイル操作
+
+```mermaid
+classDiagram
+    class EditorController
+    class FileController
+    class FileService
+    class EditorView
+    class EditorModel
+    class UndoController
+
+    FileController --> FileService : delegates
+    FileController --> UndoController : uses
+    EditorController --> FileController : delegates
+    FileController --> EditorView : uses
+    FileController --> EditorModel : updates
+
+    EditorModel --> EditorController : notifies
+```
+
+---
+
+### ● 検索・置換
+
+```mermaid
+classDiagram
+    class EditorController
+    class SearchController
+    class SearchReplaceDialog
+    class SearchHandler
+    class SearchService
+    class EditorView
+    class UndoSupport
+
+    EditorController --> SearchController : delegates
+    SearchController --> EditorView : uses
+    SearchController --> SearchReplaceDialog : manages
+    SearchController --> SearchHandler : delegates
+
+    SearchService ..|> SearchHandler
+    SearchService --> UndoSupport : uses
+    SearchReplaceDialog --> SearchHandler : delegates
+```
+
+---
+
+### ● イベント・状態通知
+
+```mermaid
+classDiagram
+    class EditorEventHandler
+    class EditorController
+    class EditorModel
+    class ModelListener
+    class EditorView
+
+    EditorEventHandler --> EditorView : monitors
+    EditorEventHandler --> EditorController : callbacks
+
+    EditorController ..|> ModelListener
+    EditorModel --> ModelListener : notifies
+
+    EditorController --> EditorView : updates
+```
+
+---
+
+### ● Undo
+
+```mermaid
+classDiagram
+    class EditorController
+    class UndoController
+    class UndoSupport
+    class SearchService
+
+    EditorController --> UndoController : delegates
+    UndoController --> UndoSupport : uses
+
+    SearchService --> UndoSupport : uses
+```
+
 
 ---
 
