@@ -7,7 +7,7 @@ import view.EditorView;
 import view.SearchReplaceDialog;
 
 /**
- * TextEditor1Go の検索・置換まわりの制御を担当する Controller クラス。
+ * TextEditor の検索・置換まわりの制御を担当する Controller クラス。
  *
  * このクラスは以下の役割を持つ。
  * - 検索文字列入力ダイアログの表示

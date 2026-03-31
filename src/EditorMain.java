@@ -3,11 +3,11 @@ import javax.swing.*;
 import controller.EditorController;
 
 /**
- * TextEditor1Go を起動するクラス。
+ * TextEditor を起動するクラス。
  *
  * 実際の画面制御やイベント処理は EditorController が担当する。
  */
-public class Main {
+public class EditorMain {
 
     /**
      * アプリケーションを起動する。

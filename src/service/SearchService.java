@@ -6,7 +6,7 @@ import javax.swing.text.Document;
 import java.awt.*;
 
 /**
- * TextEditor1Go の検索・置換機能を担当するサービスクラス。
+ * TextEditor の検索・置換機能を担当するサービスクラス。
  *
  * JTextArea を対象として、
  * 検索、次を検索、1件置換、すべて置換を行う。

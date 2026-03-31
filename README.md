@@ -1,4 +1,4 @@
-# TextEditor1Go
+# TextEditor
 
 Swingで開発したシンプルなテキストエディタです。  
 基本的な編集機能に加え、検索・置換やUndo/Redoを実装しています。
@@ -32,7 +32,7 @@ Swingで開発したシンプルなテキストエディタです。
 ## ■ パッケージ構成
 
 ```text
-Main                    // アプリケーションのエントリーポイント
+EditorMain              // アプリケーションのエントリーポイント
 
 controller
 ├ EditorController      // アプリケーションの司令塔

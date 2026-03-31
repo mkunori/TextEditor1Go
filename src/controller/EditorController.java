@@ -16,7 +16,7 @@ import java.awt.event.WindowEvent;
 import java.io.File;
 
 /**
- * TextEditor1Go 全体の制御を担当する Controller クラス。
+ * TextEditor 全体の制御を担当する Controller クラス。
  *
  * このクラスはアプリケーションの司令塔として、
  * View、Model、各機能別 Controller / Service を接続し、

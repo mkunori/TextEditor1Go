@@ -10,7 +10,7 @@ import service.FileService;
 import view.EditorView;
 
 /**
- * TextEditor1Go のファイル操作を担当する Controller クラス。
+ * TextEditor のファイル操作を担当する Controller クラス。
  *
  * このクラスは以下の役割を持つ。
  * - 新規作成

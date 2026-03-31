@@ -4,7 +4,7 @@ import javax.swing.*;
 import java.awt.*;
 
 /**
- * TextEditor1Go の画面表示を担当する View クラス。
+ * TextEditor の画面表示を担当する View クラス。
  *
  * テキストエリア、行番号エリア、ステータスバー、
  * メニューバーなどの UI 部品を構築・保持する。
@@ -39,7 +39,7 @@ public class EditorView extends JFrame {
      * メイン画面を初期化する。
      */
     public EditorView() {
-        setTitle("テキストエディタ-1号");
+        setTitle("テキストエディタ");
         setSize(600, 400);
         setLocationRelativeTo(null);
         setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
@@ -273,6 +273,6 @@ public class EditorView extends JFrame {
      */
     public void updateTitle(String fileName, boolean modified) {
         String modifiedMark = modified ? " *" : "";
-        setTitle("テキストエディタ-1号 - " + fileName + modifiedMark);
+        setTitle("テキストエディタ - " + fileName + modifiedMark);
     }
 }

@@ -7,7 +7,7 @@ import service.SearchReplaceHandler;
 import java.awt.*;
 
 /**
- * TextEditor1Go の検索・置換ダイアログ。
+ * TextEditor の検索・置換ダイアログ。
  *
  * 検索文字列と置換文字列の入力欄を持ち、
  * 「次を検索」「置換」「すべて置換」の操作を提供する。
